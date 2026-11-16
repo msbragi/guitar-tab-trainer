@@ -1,0 +1,27 @@
+{
+  "name": "@guitar-practice/web",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "ng build",
+    "dev": "ng serve --host 127.0.0.1",
+    "typecheck": "ngc -p tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "@angular/common": "21.2.26",
+    "@angular/compiler": "21.2.26",
+    "@angular/core": "21.2.26",
+    "@angular/platform-browser": "21.2.26",
+    "@guitar-practice/alphatab-adapter": "workspace:*",
+    "@guitar-practice/core": "workspace:*",
+    "@jsverse/transloco": "8.4.0",
+    "rxjs": "7.8.2",
+    "tslib": "2.8.1"
+  },
+  "devDependencies": {
+    "@angular/build": "21.2.30",
+    "@angular/cli": "21.2.30",
+    "@angular/compiler-cli": "21.2.26"
+  }
+}

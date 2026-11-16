@@ -1,0 +1,62 @@
+{
+  "$schema": "./apps/web/node_modules/@angular/cli/lib/config/schema.json",
+  "version": 1,
+  "cli": {
+    "analytics": false
+  },
+  "projects": {
+    "web": {
+      "projectType": "application",
+      "root": "apps/web",
+      "sourceRoot": "apps/web/src",
+      "architect": {
+        "build": {
+          "builder": "@angular/build:application",
+          "options": {
+            "outputPath": "apps/web/dist/web",
+            "index": "apps/web/src/index.html",
+            "browser": "apps/web/src/main.ts",
+            "tsConfig": "apps/web/tsconfig.json",
+            "styles": [
+              "apps/web/src/styles.css"
+            ],
+            "assets": [
+              {
+                "glob": "**/*",
+                "input": "packages/alphatab-adapter/node_modules/@coderline/alphatab/dist/font",
+                "output": "assets/alphatab/font"
+              },
+              {
+                "glob": "LICENSE",
+                "input": "packages/alphatab-adapter/node_modules/@coderline/alphatab",
+                "output": "assets/alphatab"
+              },
+              {
+                "glob": "**/*.json",
+                "input": "apps/web/public/i18n",
+                "output": "assets/i18n"
+              }
+            ]
+          },
+          "configurations": {
+            "production": {
+              "outputHashing": "all"
+            },
+            "development": {
+              "optimization": false,
+              "sourceMap": true
+            }
+          },
+          "defaultConfiguration": "production"
+        },
+        "serve": {
+          "builder": "@angular/build:dev-server",
+          "options": {
+            "buildTarget": "web:build:development",
+            "prebundle": false
+          }
+        }
+      }
+    }
+  }
+}

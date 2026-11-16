@@ -1,0 +1,42 @@
+{
+  "app": {
+    "name": "Guitar Tab Trainer",
+    "eyebrow": "YOUR PRACTICE SPACE",
+    "intro": "Open a Guitar Pro tablature from your computer."
+  },
+  "language": { "label": "Language", "english": "English", "italian": "Italian" },
+  "file": {
+    "section": "Load tablature",
+    "choose": "Choose a tablature",
+    "none": "No file selected",
+    "hint": "GP3, GP4, GP5, GPX and GP · Your file stays on your device."
+  },
+  "status": {
+    "idle": "No tablature loaded.",
+    "loading": "Loading {{fileName}}…",
+    "ready": "Tablature ready · {{fileName}}"
+  },
+  "score": {
+    "info": "Tablature information",
+    "untitled": "Untitled tablature",
+    "bar": "{{count}} bar",
+    "bars": "{{count}} bars",
+    "track": "{{count}} track",
+    "tracks": "{{count}} tracks",
+    "trackList": "Tracks",
+    "view": "Tablature"
+  },
+  "errors": {
+    "empty-file": "The file is empty.",
+    "invalid-score": "Invalid or unsupported Guitar Pro file.",
+    "render-failed": "Unable to display the tablature.",
+    "render-timeout": "Rendering did not finish. Check that the local fonts are available.",
+    "cancelled": "Loading cancelled.",
+    "session-closed": "The tablature view is closed.",
+    "busy": "A file is already loading.",
+    "read-failed": "Unable to read the selected file.",
+    "load-failed": "Unable to load the tablature.",
+    "retry": "Choose another file to try again."
+  },
+  "footer": { "local": "Local reading", "poweredBy": "Powered by" }
+}

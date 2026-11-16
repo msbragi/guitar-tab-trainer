@@ -1,0 +1,30 @@
+:root { font-family: system-ui, sans-serif; color: #172a32; background: #f4f6f5; }
+* { box-sizing: border-box; }
+body { margin: 0; }
+main { max-width: 1200px; margin: 0 auto; padding: 2rem; }
+header { margin-bottom: 2rem; }
+.language-picker { display: flex; justify-content: flex-end; gap: .4rem; }
+.language-picker button { font: inherit; border: 1px solid #b9cec5; border-radius: .35rem; padding: .4rem .65rem; background: white; color: #1c5b4c; cursor: pointer; }
+.language-picker button[aria-pressed="true"] { background: #1c5b4c; color: white; }
+h1 { font-size: clamp(2rem, 5vw, 3rem); letter-spacing: -.04em; margin: .4rem 0; }
+h2 { margin: .4rem 0; }
+p { line-height: 1.6; }
+.eyebrow { font-size: .75rem; letter-spacing: .14em; font-weight: 700; color: #376b60; }
+.file-panel { background: #fff; border: 1px solid #d7e1dd; padding: 1.25rem; border-radius: .75rem; }
+.file-picker { display: flex; align-items: center; flex-wrap: wrap; gap: .75rem; overflow-wrap: anywhere; }
+.file-button { font-weight: 650; background: #1c5b4c; color: white; border-radius: .35rem; padding: .7rem 1rem; cursor: pointer; }
+.visually-hidden { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; border: 0; }
+input:focus-visible + label, button:focus-visible, a:focus-visible { outline: 3px solid #b47d20; outline-offset: 4px; }
+input:disabled + label { opacity: .65; cursor: wait; }
+.hint, footer { font-size: .85rem; color: #52665e; }
+.hint { margin-bottom: 0; }
+.status { color: #376b60; min-height: 2.5rem; }
+.error { background: #fff0ed; border-left: 4px solid #ad3e2d; padding: 1rem; color: #842b20; }
+.score-info { margin-bottom: 1rem; }
+.score-info ul { display: flex; flex-wrap: wrap; gap: .5rem; list-style: none; padding: 0; }
+.score-info li { border: 1px solid #c5d7ce; border-radius: 1rem; padding: .25rem .75rem; font-size: .85rem; }
+.score-panel { background: white; border: 1px solid #d7e1dd; border-radius: .75rem; padding: .75rem; overflow-x: auto; }
+.score-host { min-height: 240px; }
+footer { margin-top: 1.5rem; }
+a { color: #1c5b4c; }
+@media (max-width: 600px) { main { padding: 1rem; } .score-panel { padding: .25rem; } }

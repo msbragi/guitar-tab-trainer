@@ -1,0 +1,42 @@
+{
+  "app": {
+    "name": "Guitar Tab Trainer",
+    "eyebrow": "IL TUO SPAZIO DI STUDIO",
+    "intro": "Apri una tablatura Guitar Pro dal tuo computer."
+  },
+  "language": { "label": "Lingua", "english": "Inglese", "italian": "Italiano" },
+  "file": {
+    "section": "Caricamento tablatura",
+    "choose": "Scegli una tablatura",
+    "none": "Nessun file selezionato",
+    "hint": "GP3, GP4, GP5, GPX e GP · Il file resta sul tuo dispositivo."
+  },
+  "status": {
+    "idle": "Nessuna tablatura caricata.",
+    "loading": "Caricamento di {{fileName}}…",
+    "ready": "Tablatura pronta · {{fileName}}"
+  },
+  "score": {
+    "info": "Informazioni tablatura",
+    "untitled": "Tablatura senza titolo",
+    "bar": "{{count}} battuta",
+    "bars": "{{count}} battute",
+    "track": "{{count}} traccia",
+    "tracks": "{{count}} tracce",
+    "trackList": "Tracce",
+    "view": "Tablatura"
+  },
+  "errors": {
+    "empty-file": "Il file è vuoto.",
+    "invalid-score": "File Guitar Pro non valido o non supportato.",
+    "render-failed": "Impossibile visualizzare la tablatura.",
+    "render-timeout": "Rendering non completato. Verifica la disponibilità dei font locali.",
+    "cancelled": "Caricamento annullato.",
+    "session-closed": "Vista della tablatura chiusa.",
+    "busy": "Caricamento già in corso.",
+    "read-failed": "Impossibile leggere il file selezionato.",
+    "load-failed": "Impossibile caricare la tablatura.",
+    "retry": "Scegli un altro file per riprovare."
+  },
+  "footer": { "local": "Lettura locale", "poweredBy": "Realizzato con" }
+}

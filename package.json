@@ -1,0 +1,23 @@
+{
+  "name": "guitar-tab-trainer",
+  "private": true,
+  "type": "module",
+  "packageManager": "pnpm@10.34.9",
+  "engines": {
+    "node": ">=22.12.0 <23 || >=24.0.0 <25"
+  },
+  "scripts": {
+    "build:packages": "pnpm -r --filter './packages/**' build",
+    "build": "pnpm build:packages && pnpm --filter @guitar-practice/web build",
+    "typecheck": "pnpm build:packages && pnpm -r typecheck",
+    "check:boundaries": "node scripts/check-boundaries.mjs",
+    "test": "pnpm check:boundaries && vitest run",
+    "dev": "pnpm build:packages && node scripts/dev.mjs",
+    "test:browser": "pnpm build && playwright test"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.65.1",
+    "typescript": "5.9.3",
+    "vitest": "4.1.12"
+  }
+}

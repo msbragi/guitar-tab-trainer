@@ -1,0 +1,52 @@
+@let current = state();
+<main>
+  <header>
+    <nav class="language-picker" [attr.aria-label]="'language.label' | transloco">
+      <button type="button" lang="en" [title]="'language.english' | transloco"
+        [attr.aria-pressed]="language.current() === 'en'" (click)="language.select('en')">EN</button>
+      <button type="button" lang="it" [title]="'language.italian' | transloco"
+        [attr.aria-pressed]="language.current() === 'it'" (click)="language.select('it')">IT</button>
+    </nav>
+    <p class="eyebrow">{{ 'app.eyebrow' | transloco }}</p>
+    <h1>{{ 'app.name' | transloco }}</h1>
+    <p>{{ 'app.intro' | transloco }}</p>
+  </header>
+
+  <section class="file-panel" [attr.aria-label]="'file.section' | transloco">
+    <div class="file-picker">
+      <input id="score-file" class="visually-hidden" type="file" accept=".gp3,.gp4,.gp5,.gpx,.gp"
+        [disabled]="!available() || current.status === 'loading'" (change)="openFile($event)">
+      <label class="file-button" for="score-file">{{ 'file.choose' | transloco }}</label>
+      <span>{{ current.status === 'idle' ? ('file.none' | transloco) : current.fileName }}</span>
+    </div>
+    <p class="hint">{{ 'file.hint' | transloco }}</p>
+  </section>
+
+  <div class="status" role="status" aria-live="polite">
+    @switch (current.status) {
+      @case ('idle') { <p>{{ 'status.idle' | transloco }}</p> }
+      @case ('loading') { <p>{{ 'status.loading' | transloco: { fileName: current.fileName } }}</p> }
+      @case ('ready') { <p>{{ 'status.ready' | transloco: { fileName: current.fileName } }}</p> }
+    }
+  </div>
+  @if (current.status === 'error') {
+    <p class="error" role="alert">{{ ('errors.' + current.code) | transloco }} {{ 'errors.retry' | transloco }}</p>
+  }
+  @if (current.status === 'ready') {
+    <section class="score-info" [attr.aria-label]="'score.info' | transloco">
+      <h2>{{ current.score.title.trim() ? current.score.title : ('score.untitled' | transloco) }}</h2>
+      @if (current.score.artist) { <p>{{ current.score.artist }}</p> }
+      <p>{{ (current.score.barCount === 1 ? 'score.bar' : 'score.bars') | transloco: { count: current.score.barCount } }} ·
+        {{ (current.score.tracks.length === 1 ? 'score.track' : 'score.tracks') | transloco: { count: current.score.tracks.length } }}</p>
+      <ul [attr.aria-label]="'score.trackList' | transloco">
+        @for (track of current.score.tracks; track track.index) { <li>{{ track.name }}</li> }
+      </ul>
+    </section>
+  }
+
+  <section class="score-panel" [attr.aria-label]="'score.view' | transloco" [attr.aria-busy]="current.status === 'loading'">
+    <div #scoreHost class="score-host"></div>
+  </section>
+  <footer>{{ 'footer.local' | transloco }} · {{ 'footer.poweredBy' | transloco }}
+    <a href="https://alphatab.net" target="_blank" rel="noopener noreferrer">alphaTab</a></footer>
+</main>
