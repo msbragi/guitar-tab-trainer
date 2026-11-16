@@ -8,8 +8,8 @@ import { Icon } from '../shared/icon.js';
     <aside class="side-panel library-panel" [class.collapsed]="collapsed()" [attr.aria-label]="'shell.libraryPanel' | transloco">
       <div class="panel-top"><span class="panel-caption">{{ 'nav.library' | transloco }}</span>
         <button class="icon-button" type="button" [attr.aria-label]="(collapsed() ? 'shell.expandLibrary' : 'shell.collapseLibrary') | transloco"
-          [attr.aria-expanded]="!collapsed()" aria-controls="library-panel-content" (click)="toggle.emit()"><gp-icon [name]="collapsed() ? 'right' : 'left'" /></button></div>
-      <button class="primary-button open-tab" type="button" [disabled]="busy()" [attr.aria-label]="'shell.openTab' | transloco" (click)="openTab.emit()">
+          [title]="(collapsed() ? 'shell.expandLibrary' : 'shell.collapseLibrary') | transloco" [attr.aria-expanded]="!collapsed()" aria-controls="library-panel-content" (click)="toggle.emit()"><gp-icon [name]="collapsed() ? 'right' : 'left'" /></button></div>
+      <button class="primary-button open-tab" type="button" [disabled]="busy()" [attr.aria-label]="'shell.openTab' | transloco" [title]="'shell.openTab' | transloco" (click)="openTab.emit()">
         <gp-icon name="folder" /><span>{{ 'shell.openTab' | transloco }}</span></button>
       <div id="library-panel-content" [hidden]="collapsed()">
         <section class="library-section"><h3><gp-icon name="clock" />{{ 'shell.recent' | transloco }}</h3>

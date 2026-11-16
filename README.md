@@ -8,7 +8,7 @@ The goal is to provide an environment for learning guitar parts through interact
 
 The project is also an experiment in AI-assisted software development, with human supervision of architectural decisions and validation.
 
-**Current status:** M0–M3, EN/IT localization, and the responsive UI shell are implemented and verified. M4 has not started.
+**Current status:** M0–M4, including synthesized playback, track mixer, visual feedback, EN/IT tooltips, and compact transport, are implemented. The user reported that the app works after manual testing and accepted M4 as the baseline for M5 analysis. Automated verification still has four open browser scenarios; M5 is not implemented.
 
 ## Development Environment
 
@@ -65,10 +65,10 @@ The layout follows [the design reference](docs/GTT-UI.png) with standalone Angul
 - Collapsible file sidebar with Open Tab. Recent files and favorites are explicitly unavailable placeholders, with no fictitious entries or musical-library persistence.
 - Central song information and alphaTab viewer. The viewer stays mounted across section changes, retaining the loaded document and renderer.
 - Score & Tab, Tab Only, and Notation Only modes; zoom at 75%, 100%, 125%, and 150%; browser fullscreen where supported.
-- Track panel populated exclusively from the loaded score. Mute, solo, and volume controls are disabled and marked as unavailable.
-- Permanent bottom transport area. Playback, timeline, loop A/B, speed, tempo, and master volume remain disabled even after a score is loaded.
+- Track panel populated exclusively from the loaded score, with mute/unmute, cumulative solo/unsolo, and independent track volume through the alphaTab synthesizer.
+- Permanent bottom transport area with synthesized playback, timeline, A/B loop, speed, and read-only tempo. Master volume is active; the desktop transport uses a compact horizontal layout and wraps on smaller screens.
 
-Library, Projects, and Virtual Rig pages explain that their future functionality is unavailable. Settings currently implements appearance preferences. There is no simulated playback, mixer, rig, library, or project workflow.
+Library, Projects, and Virtual Rig pages explain that their future functionality is unavailable. Settings currently implements appearance preferences. Playback uses the real alphaTab synthesizer. Rig, library, and project workflows remain unavailable.
 
 On small screens the side panels start collapsed and expand over the workspace. The notation paper retains a minimum width of 720px and scrolls inside the viewer, preserving musical readability without causing horizontal page overflow. The paper stays light in dark mode.
 
@@ -88,7 +88,31 @@ A small synchronous script in the document head applies the saved/system theme b
 - Retry handling and cleanup of previous rendering instances.
 - Preservation of original Guitar Pro files.
 
-The player is currently disabled. Audio playback, SoundFonts, and an independent Audio Engine have not yet been implemented.
+### Implemented — M4
+
+- Synthesized playback through the public APIs of alphaTab **1.9.0**, without modifications or a fork.
+- Play/pause, stop, timeline seek, speed from 25% to 200%, and A/B loops.
+- Set A/B at the current position, including during playback. Valid changes preserve playback and keep the position inside the new range; invalid ranges leave the previous loop intact.
+- Stop returns to the active range start or the song start. Loop B is exclusive. Small seek rounding comes from the player.
+- One authoritative transport state in the framework-independent core; Angular presents its snapshots and forwards commands.
+- Local SoundFont, worker, and worklet assets; audio errors keep the score readable. Reopen the file to retry.
+
+Playback becomes available after audio preparation. Press Play to start from a user gesture. The timeline uses the executed sequence, including repeats; displayed times follow the current playback speed. Use localhost or HTTPS for AudioWorklet.
+
+This is a single-source reference player. No independent Audio Engine or synchronized backing playback has been introduced. The user has given general manual acceptance; detailed acoustic and device-specific checks remain unreported. See [M4 validation](docs/M4_PLAYBACK.md).
+
+### M4 Track Mixer and UI
+
+The core owns mixer state and commands through `MixerController` and `MixerPort`. The adapter alone calls `changeTrackMute`, `changeTrackSolo`, `changeTrackVolume`, and `masterVolume` on alphaTab 1.9.0. Angular only displays snapshots and forwards interactions. There is no custom audio mixer.
+
+- Mute and solo can be active on multiple tracks. Solo is cumulative; an explicitly muted track stays silent even when soloed. Removing the last solo restores the other unmuted tracks.
+- Track and master volumes range from 0% to 100%. A new document restores its track volumes from the GP, resets mute/solo, and restores master volume to 100%. View, zoom, theme, language, and navigation changes preserve mixer settings for the current document.
+- alphaTab controls MIDI channels: tracks sharing a channel cannot be isolated. Their controls are linked and marked in the UI. The first track in a linked group supplies its initial volume. The original file and musical model remain unchanged.
+- Action buttons and controls have native browser tooltips translated with Transloco. Titles update on EN/IT changes; visible text or accessible labels identify controls independently of tooltips. Display timing and touch behavior follow the browser.
+- The transport keeps play/pause, stop, timeline, speed, A/B, tempo readout, and master volume. The inactive previous-button placeholder is removed; A/B values and instructions remain accessible. Desktop is one row, with responsive wrapping and larger mobile targets.
+- Playback cursors and SVG note highlighting use scoped CSS on the always-light notation paper. The user confirmed the visual feedback during manual testing.
+
+Tests and manual checks are detailed in [M4 playback](docs/M4_PLAYBACK.md). Mixer fixtures are documented in [M4_MIXER.md](tests/fixtures/M4_MIXER.md).
 
 ### Internationalization — Implemented
 
@@ -120,9 +144,7 @@ The operating system's native file picker retains its browser/system language. T
 
 ### Planned Features
 
-- Synthesized playback of musical tracks.
 - Synchronized backing track playback.
-- Playback speed, navigation, and practice loops.
 - Independent audio source mixing.
 - Live guitar input through audio interfaces or USB modelers.
 - Local study projects and session persistence.
@@ -130,7 +152,7 @@ The operating system's native file picker retains its browser/system language. T
 
 ## Local Assets and Offline Operation
 
-Bravura fonts and their licenses are copied from the installed alphaTab package into:
+Bravura fonts, SONiVOX SF2 with its license, and unmodified alphaTab audio scripts are copied from the installed package into:
 
 `assets/alphatab/`
 
@@ -195,6 +217,10 @@ In managed sandbox environments, browser tests may require permission to open lo
 
 The Guitar Pro test corpus is documented in [tests/fixtures/alphatab/README.md](tests/fixtures/alphatab/README.md).
 
+Current M4 finalization validation: build, typecheck and boundaries passed; **66 Node tests in 12 files passed**. The latest Chromium suite finished with **30 passed and 4 failed out of 34**. The open cases concern a shared-channel fixture, an audio unmute signal check, and two responsive helpers targeting controls in a collapsed panel. Causes and evidence are recorded in [the handoff](docs/SESSION_HANDOFF.md); the suite must not be described as green. The user requested stopping further automated validation, tested the app personally, and reported “It seems all ok”. No additional tests were run for the final documentation update.
+
+Earlier M4 playback validation, before mixer/UI finalization: 57 Node tests and 27 Chromium production tests passed, plus six playback scenarios against an isolated development server. These historical results do not supersede the current browser failures.
+
 UI shell validation: build, typecheck, architectural boundary checks, **45 automated tests**, and **21 Chromium browser tests** passed. The browser suite includes all previous M3/localization scenarios plus navigation, disabled future controls, panel collapse, theme persistence/system changes, theme initialization before Angular, display modes, zoom, fullscreen where available, and mobile rendering. Desktop dark and mobile screenshots were inspected. Browser tests use the production build on port 4173; the user's hot-reload server on port 4200 is left running.
 
 Internationalization validation: 35 automated tests and 14 Chromium tests against the production build passed, together with build, typecheck, and a frozen-lockfile offline installation. Browser scenarios cover detection, persistence, runtime switching, English fallback, unavailable storage, translated errors, and unchanged score metadata/rendering. The additional development-server check was skipped because port 4200 was occupied by the user's active hot-reload session; that server was left running.
@@ -243,7 +269,8 @@ No backend, native Audio Engine, or desktop runtime has been introduced.
 - Performance with large scores has not been measured.
 - The verified test corpus covers GP3, GP5, and GP7; GP4 and GPX remain untested.
 - Successful SVG rendering and metadata extraction do not guarantee complete fidelity of musical effects.
-- No synthesized playback or backing track support yet.
+- General manual acceptance is recorded; detailed musical fidelity, loop artifacts, device/browser coverage and native-device latency are not certified. Synchronized backing tracks are not implemented.
+- Four automated browser scenarios remain open; see the handoff, including the known synthetic-fixture issues.
 - No persistent study-project storage or SQLite integration; only UI language and appearance preferences are persisted.
 - No native audio device integration.
 - No desktop packaging.
@@ -252,9 +279,9 @@ No backend, native Audio Engine, or desktop runtime has been introduced.
 
 Development milestones and their current status are tracked in [TODO.md](TODO.md).
 
-For the consolidated project state, validation results, known limitations, and the next session's M4 scope, read [docs/SESSION_HANDOFF.md](docs/SESSION_HANDOFF.md).
+For the current state, manual acceptance, automated-test debt, environment details and restart instructions, read [docs/SESSION_HANDOFF.md](docs/SESSION_HANDOFF.md). The next-session prompt and M5 analysis checklist are in [docs/M5_START.md](docs/M5_START.md).
 
-The next major milestone is synthesized audio playback, followed by validation of synchronized playback across multiple audio sources.
+Next: M5 analysis and planning for external audio and a shared transport clock. Compare PCM, external MIDI synthesis and prerendering, and agree on a prototype and measurable thresholds before implementation. Do not automatically restart the M4 test campaign; the user prefers direct manual validation.
 
 ## Licensing
 

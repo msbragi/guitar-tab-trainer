@@ -1,5 +1,52 @@
 # Guitar Tab Trainer — TODO
 
+## Stato corrente — chiusura operativa M4, 16 novembre 2026
+
+M0–M4 implementate, inclusi feedback visivo, Track Mixer, tooltip EN/IT e
+trasporto compatto. Dopo prova manuale l'utente ha riferito «It seems all ok»
+e chiesto di preparare la ripartenza **M5**. M4 è la baseline accettata per
+l'analisi M5; il riscontro generale non certifica ogni caso specialistico.
+
+M5 non implementata. Ripartire da [docs/SESSION_HANDOFF.md](docs/SESSION_HANDOFF.md)
+e [docs/M5_START.md](docs/M5_START.md), che contiene il prompt della prossima sessione.
+Non rilanciare automaticamente le lunghe suite M4: l'utente preferisce provare
+l'app direttamente. Non fare commit/push né fermare il suo server sulla 4200.
+Per correzioni semplici UI/CSS procedere dopo l'analisi; modifiche a core,
+librerie o moduli richiedono un perimetro già autorizzato o approvazione.
+
+### Finalizzazione — Track Mixer e UI
+
+- [x] Implementare stato immutabile/comandi mixer nel core e API pubbliche nell'adapter.
+- [x] Attivare mute/solo cumulativi, volumi traccia/master e reset al nuovo spartito.
+- [x] Collegare controlli per canali condivisi e mostrare il limite nella UI.
+- [x] Aggiungere tooltip nativi Transloco EN/IT con label accessibili indipendenti.
+- [x] Compattare trasporto desktop/responsive preservando i controlli attivi.
+- [x] Eseguire build, typecheck, confini, test Node e regressioni browser; registrare gli esiti effettivi.
+- [x] Ricevere riscontro manuale positivo dell'utente e preparare documentazione di ripartenza.
+- [ ] Chiarire il debito dei quattro scenari browser descritti sotto, senza riavviarlo automaticamente come prerequisito di M5.
+
+Risultati più recenti: build, typecheck e confini passati; **66 test Node in
+12 file passati**; browser **30 passati e 4 falliti su 34**. La suite non è verde.
+I vecchi risultati 57/27 e i sei scenari dev verdi precedono il mixer/UI.
+
+Debito aperto:
+
+- Fixture `m4-mixer-linked.gp` riletta con canali distinti, non quelli condivisi
+  richiesti dal generatore: il caso browser non esercita la condizione attesa.
+- Segnale dopo unmute nella fixture sintetica non ripristinato come atteso;
+  causa non chiusa. Rilevate note/voci duplicate e programma MIDI diverso
+  dopo export/import; possibile collisione ID fra chiamate `loadAlphaTex`.
+- Due scenari responsive cercano tramite ruolo pulsanti nel pannello
+  collassato/nascosto (1024 e 390 px), prima di raggiungere le misure di layout.
+
+Non cancellare i fallimenti né definirli tutti difetti del prodotto o tutti
+problemi delle fixture. Dettagli, file e contesto nell'handoff. Le API mute,
+solo e volume agiscono sui canali; controlli di tracce collegate restano
+sincronizzati. Volume 0–100%, iniziale GP, master 100%, mute/solo azzerati a
+nuovo documento. Nessun mixer audio personalizzato, fork o nuova dipendenza.
+
+I riepiloghi M0–M3 e della prima implementazione M4 sotto sono storici.
+
 ## Consolidamento e handoff — 16 novembre 2026
 
 - [x] Verificare stato Git iniziale, staging, modifiche non pertinenti e artefatti ignorati.
@@ -292,17 +339,71 @@ SQLite, backend o runtime desktop introdotto. M4–M6 restano lavoro futuro.
 
 ## M4 — Playback sintetizzato di riferimento
 
-- [ ] Definire comandi e stato minimo del trasporto.
-- [ ] Integrare play, pausa, stop, seek, velocità e loop.
-- [ ] Distribuire localmente SoundFont, worker e worklet necessari.
-- [ ] Testare la logica dei comandi e verificare il playback nel browser.
+Correzione visiva autorizzata dopo verifica manuale: aggiungere soltanto gli
+stili dei cursori alphaTab e delle note evidenziate. Core, adapter, librerie,
+viewport e scorrimento restano fuori dall'intervento. Verifica nell'app a cura
+dell'utente, senza aggiungere o eseguire test automatici per questa correzione.
+
+- [x] Applicare CSS globali circoscritti a `.score-host` per battuta, beat e note.
+- [x] Verifica manuale dell'utente: evidenziazione e movimento durante playback.
+
+Piano approvato il 16 novembre 2026. Perimetro: synth alphaTab 1.9.0 tramite
+API pubbliche, nessun fork o aggiornamento di dipendenze; nessuna attività M5.
+Unica rappresentazione autorevole del trasporto nel core; Angular presenta
+lo stato e inoltra i comandi. Il player è l'autorità temporale della singola
+sorgente M4, senza clock applicativo concorrente.
+
+- [x] Definire port, controller e stato del trasporto nel core (tick e ms distinti).
+- [x] Gestire preparazione audio separata dal rendering, errori e lifecycle.
+- [x] Collegare play/pausa, stop, seek, velocità e loop A/B; stop all'inizio
+  dell'intervallo attivo o del brano; validare gli intervalli nel core.
+- [x] Verificare modifiche A/B durante il playback, ripetizioni e cambi di tempo.
+- [x] Distribuire SoundFont SF2, licenze e script audio localmente con Angular.
+- [x] Conservare modalità, zoom, navigazione, tema e localizzazione EN/IT;
+  mixer, volume, precedente ed editing BPM restano disabilitati.
+- [x] Eseguire build, typecheck, test, confini e suite browser di produzione.
+- [x] Documentare separatamente prove automatiche e ascolto manuale richiesto.
+- [x] Aggiornare risultati, criticità e handoff; nessun commit/push.
+
+- [x] Definire comandi e stato minimo del trasporto.
+- [x] Integrare play, pausa, stop, seek, velocità e loop.
+- [x] Distribuire localmente SoundFont, worker e worklet necessari.
+- [x] Testare la logica dei comandi e verificare il playback nel browser.
 
 Verifica:
 comandi e stato coerenti; playback udibile dopo interazione utente;
 risorse disponibili nella build distribuita.
 Questa milestone non certifica la sincronizzazione multisorgente.
 
+Esito implementazione: completata nel perimetro approvato. Build, typecheck,
+controllo dei confini e 57 test Node (10 file) passati. Suite completa sulla
+build di produzione: 27 test Chromium passati, inclusi 6 scenari M4.
+Gli stessi 6 scenari M4 sono passati sul server Angular isolato 4174 (32,5 s).
+Una riesecuzione interrotta da SIGTERM aveva lasciato attivo il server:
+verifica completata sul processo esistente e processo di test poi chiuso;
+server dell’utente sulla 4200 non fermato.
+Campioni non nulli misurati tramite AudioWorkletNode nella prima verifica.
+Successivamente l’utente ha provato l’app e dato accettazione operativa
+generale; dettagli su dispositivo e singoli scenari non sono stati riportati.
+
+Criticità risolte: eventi di campioni tardivi dopo stop/pausa filtrati dal core;
+cleanup anche senza ack del worker; errori asincroni del worklet; label e
+selezione iniziale 100% della velocità. Seek verificato con tolleranza 2 tick
+per l'arrotondamento del player. Screenshot desktop/mobile ispezionati.
+Nessuna dipendenza o lockfile modificati, nessun fixture originale alterato.
+
+- [ ] Eventuale verifica specialistica documentata oltre al riscontro generale: uscita fisica, pausa/ripresa,
+  stop/seek, modifica A/B durante il suono, click/code ai bordi del loop,
+  velocità, ripetizioni, cambi di tempo e cambio file/chiusura.
+
+Procedura, decisioni e limiti: [docs/M4_PLAYBACK.md](docs/M4_PLAYBACK.md).
+M5 non iniziata; nessun commit o push.
+
 ## M5 — Prototipo di audio esterno e trasporto condiviso
+
+Prossima fase richiesta dall’utente: analisi e piano secondo
+[docs/M5_START.md](docs/M5_START.md). Nessun percorso audio/clock scelto o
+implementato; concordare decisioni e soglie prima del prototipo.
 
 - [ ] Confrontare percorso PCM, MIDI esterno e prerendering.
 - [ ] Scegliere un percorso sperimentale con approvazione esplicita.

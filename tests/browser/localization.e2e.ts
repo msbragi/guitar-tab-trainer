@@ -14,7 +14,7 @@ test('inglese iniziale, cambio senza reload, metadati e renderer invariati, pers
   await expect(page.getByRole('status')).toHaveText('Tablature ready · effects.gp');
   await expect(page.getByRole('heading', { level: 2 })).toHaveText('Effects');
   const surface = await page.locator('.at-surface').elementHandle();
-  const svg = await page.locator('.score-host').innerHTML();
+  const svg = await page.locator('.at-surface').innerHTML();
   await page.getByRole('button', { name: 'IT', exact: true }).click();
   await expect(page.locator('html')).toHaveAttribute('lang', 'it');
   await expect(page.getByRole('status')).toHaveText('Tablatura pronta · effects.gp');
@@ -22,7 +22,7 @@ test('inglese iniziale, cambio senza reload, metadati e renderer invariati, pers
   await expect(page.getByRole('heading', { level: 2 })).toHaveText('Effects');
   await expect(page.getByLabel('Tracce', { exact: true }).locator('.track-name')).toHaveText(['Track 1']);
   expect(await surface!.evaluate((element) => element === document.querySelector('.at-surface'))).toBe(true);
-  expect(await page.locator('.score-host').innerHTML()).toBe(svg);
+  expect(await page.locator('.at-surface').innerHTML()).toBe(svg);
   expect(navigations).toBe(1);
   expect(await page.evaluate((key) => localStorage.getItem(key), preferenceKey)).toBe('it');
   await page.reload();

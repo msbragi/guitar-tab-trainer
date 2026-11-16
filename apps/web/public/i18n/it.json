@@ -119,6 +119,36 @@
     "loopB": "Imposta fine loop B",
     "speed": "Velocità",
     "tempo": "Tempo",
-    "volume": "Volume generale"
+    "volume": "Volume generale",
+    "pause": "Pausa",
+    "loopHint": "Usa la timeline, poi A o B, per impostare il loop.",
+    "states": {
+      "idle": "Apri una tablatura per abilitare la riproduzione.",
+      "preparing": "Preparazione audio…",
+      "stopped": "Pronto per riprodurre",
+      "playing": "Riproduzione in corso",
+      "paused": "In pausa",
+      "error": "Audio non disponibile. Riapri la tablatura per riprovare."
+    },
+    "errors": {
+      "audio-unavailable": "Impossibile avviare l’audio. Controlla le risorse audio locali e i permessi del browser.",
+      "prepare-timeout": "Preparazione audio scaduta. Riapri la tablatura per riprovare.",
+      "playback-failed": "Riproduzione fallita. Riapri la tablatura per riprovare.",
+      "invalid-loop": "A deve precedere B. Il loop precedente resta invariato.",
+      "invalid-command": "Valore di riproduzione non valido."
+    }
+  },
+  "mixer": {
+    "unmute": "Riattiva {{name}}",
+    "unsolo": "Disattiva solo {{name}}",
+    "trackControls": "Mixer: {{name}}",
+    "hint": "Il solo è cumulativo. Le tracce in mute restano silenziose, anche in solo.",
+    "waiting": "Il mixer sarà disponibile quando l’audio è pronto.",
+    "excluded": "Esclusa da mute o selezione solo",
+    "linked": "Controlli collegati: queste tracce condividono canali MIDI.",
+    "errors": {
+      "mixer-failed": "Impossibile modificare il mixer. Riprova o riapri la tablatura.",
+      "invalid-volume": "Il volume deve essere compreso tra 0% e 100%."
+    }
   }
 }

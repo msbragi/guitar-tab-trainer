@@ -53,8 +53,8 @@ test('il corpus GP viene renderizzato con risorse locali e sostituzione delle is
   expect(fonts.length).toBeGreaterThan(0);
   expect(fonts.every((status) => status === 200)).toBe(true);
   expect(requests.filter((url) => new URL(url).origin !== new URL(page.url()).origin)).toEqual([]);
-  expect(requests.filter((url) => /soundfont|worklet|\.sf2/i.test(url))).toEqual([]);
-  expect(workers).toEqual([]);
+  expect(workers.length).toBeGreaterThan(0);
+  expect(workers.every((url) => url.includes('/assets/alphatab/alphaTab.worker.mjs'))).toBe(true);
   expect(errors).toEqual([]);
   await page.screenshot({ path: 'test-results/score-rendering.png', fullPage: true });
 });

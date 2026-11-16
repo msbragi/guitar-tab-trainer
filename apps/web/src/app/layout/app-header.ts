@@ -14,11 +14,11 @@ import type { Section } from './navigation.js';
         <div><div class="brand-title"><h1>{{ 'app.name' | transloco }}</h1><span class="version">v{{ version }}</span></div>
           <p>{{ 'shell.tagline' | transloco }}</p></div>
       </div>
-      <button class="icon-button mobile-menu" type="button" [attr.aria-label]="'shell.toggleNavigation' | transloco"
+      <button class="icon-button mobile-menu" type="button" [attr.aria-label]="'shell.toggleNavigation' | transloco" [title]="'shell.toggleNavigation' | transloco"
         [attr.aria-expanded]="menuOpen()" aria-controls="primary-navigation" (click)="menuOpen.set(!menuOpen())"><gp-icon name="menu" /></button>
       <nav id="primary-navigation" class="primary-navigation" [class.menu-open]="menuOpen()" [attr.aria-label]="'shell.navigation' | transloco">
         @for (item of sections; track item.id) {
-          <button type="button" [class.active]="active() === item.id" [attr.aria-current]="active() === item.id ? 'page' : null"
+          <button type="button" [title]="('nav.' + item.id) | transloco" [class.active]="active() === item.id" [attr.aria-current]="active() === item.id ? 'page' : null"
             (click)="choose(item.id)"><gp-icon [name]="item.icon" /><span>{{ ('nav.' + item.id) | transloco }}</span></button>
         }
       </nav>

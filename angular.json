@@ -35,6 +35,16 @@
                 "glob": "**/*.json",
                 "input": "apps/web/public/i18n",
                 "output": "assets/i18n"
+              },
+              {
+                "glob": "alphaTab{,.core,.worker,.worklet}.mjs",
+                "input": "packages/alphatab-adapter/node_modules/@coderline/alphatab/dist",
+                "output": "assets/alphatab"
+              },
+              {
+                "glob": "{sonivox.sf2,LICENSE,README.md}",
+                "input": "packages/alphatab-adapter/node_modules/@coderline/alphatab/dist/soundfont",
+                "output": "assets/alphatab/soundfont"
               }
             ]
           },

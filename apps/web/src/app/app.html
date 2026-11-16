@@ -1,7 +1,7 @@
 <div class="app-shell">
   <a class="skip-link" href="#main-content">{{ 'shell.skipToContent' | transloco }}</a>
   <input #fileInput id="score-file" class="visually-hidden" type="file" accept=".gp3,.gp4,.gp5,.gpx,.gp"
-    [attr.aria-label]="'file.choose' | transloco" [disabled]="!session.available() || session.state().status === 'loading' || session.viewBusy()" (change)="openFile($event)">
+    [attr.aria-label]="'file.choose' | transloco" [title]="'file.choose' | transloco" [disabled]="!session.available() || session.state().status === 'loading' || session.viewBusy()" (change)="openFile($event)">
   <gp-app-header [active]="section()" (navigate)="section.set($event)" />
   <div class="workspace" [class.sidebar-collapsed]="sidebarCollapsed()" [class.tracks-collapsed]="tracksCollapsed()">
     <gp-library-panel [collapsed]="sidebarCollapsed()" [busy]="!session.available() || session.state().status === 'loading' || session.viewBusy()"
@@ -15,11 +15,13 @@
           <span class="section-symbol"><gp-icon [name]="sectionIcon()" /></span><p class="eyebrow">{{ 'shell.comingLater' | transloco }}</p>
           <h2>{{ ('nav.' + section()) | transloco }}</h2>
           <p class="section-description">{{ ('shell.' + section() + 'Unavailable') | transloco }}</p>
-          <button class="secondary-button" type="button" (click)="section.set('practice')">{{ 'shell.backToPractice' | transloco }}</button>
+          <button class="secondary-button" type="button" [title]="'shell.backToPractice' | transloco" (click)="section.set('practice')">{{ 'shell.backToPractice' | transloco }}</button>
         </section>
       }
     </main>
-    <gp-tracks-panel [collapsed]="tracksCollapsed()" [tracks]="tracks()" (toggle)="tracksCollapsed.set(!tracksCollapsed())" />
+    <gp-tracks-panel [collapsed]="tracksCollapsed()" [tracks]="tracks()" [mixer]="session.mixer()"
+      (toggle)="tracksCollapsed.set(!tracksCollapsed())" (mute)="session.toggleMute($event)" (solo)="session.toggleSolo($event)"
+      (volumeChange)="session.setTrackVolume($event.index, $event.volume)" />
   </div>
   <gp-transport-bar />
 </div>

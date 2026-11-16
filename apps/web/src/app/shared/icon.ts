@@ -3,6 +3,7 @@ import { Component, input } from '@angular/core';
 const paths = {
   guitar: 'M19 2l3 3-9 9m3-11 5 5M9 10c-3-3-9 2-6 6-2 3 0 6 3 5 4 2 9-4 6-7M6 17l2 2M9 15l1 1',
   play: 'M8 4l13 8-13 8z',
+  pause: 'M8 5v14M16 5v14',
   folder: 'M3 6h7l2 3h9v11H3zM3 6V4h6l2 2',
   layers: 'M12 3L2 8l10 5 10-5zM2 12l10 5 10-5M2 16l10 5 10-5',
   rig: 'M4 5h16v15H4zM7 2v3m10-3v3M4 9h16M8 13v4m4-4v4m4-4v4',

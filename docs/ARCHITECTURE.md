@@ -135,6 +135,50 @@ Sono da valutare:
 
 La scelta richiede una verifica tecnica specifica.
 
+### 6.1 Perimetro implementato in M4
+
+M4 usa il sintetizzatore integrato di alphaTab **1.9.0** come singola sorgente
+di riferimento, forzando `PlayerMode.EnabledSynthesizer` anche in presenza di
+una backing incorporata. Il player fornisce posizione e stato effettivi;
+non esiste un timer applicativo che simula l'avanzamento.
+
+`TransportController` nel core possiede l'unico stato applicativo del trasporto
+e il contratto `TransportPort`. L'adapter converte gli eventi pubblici senza
+mantenere un secondo stato applicativo. `ScoreSession` proietta gli snapshot
+immutabili in un signal Angular e inoltra comandi; i componenti presentano
+stato e controlli senza transizioni musicali autonome.
+
+I tick appartengono alla sequenza eseguita, incluse le ripetizioni. I
+millisecondi e il BPM effettivo provengono dal player alla velocità corrente;
+non sono ricavati dall'indice di battuta né dal BPM iniziale. La timeline e i
+punti A/B usano i tick; le coordinate della notazione restano nell'adapter.
+Da fermo, il core ignora notifiche di campioni tardivi e accetta soltanto
+posizionamenti espliciti (`isSeek`).
+
+La preparazione audio è distinta dal caricamento/rendering. Errori audio
+lasciano leggibile la partitura e disabilitano il trasporto; riaprire il file
+ricrea la sessione. Reset/distruzione scollegano gli eventi, chiudono l'output
+tramite API pubbliche e terminano i worker creati dall'adapter, senza dipendere
+dall'ack di un worker guasto. Font, SoundFont e script sono asset locali.
+
+La facciata integrata rimane interna all'adapter: questa milestone non
+introduce il pacchetto Audio Engine, non certifica un clock multisorgente e
+non sceglie fra PCM, MIDI esterno e prerendering. Queste decisioni restano M5,
+che richiede un'approvazione separata. Dettagli e prove in
+[M4_PLAYBACK.md](M4_PLAYBACK.md).
+
+### 6.2 Mixer e stato di avanzamento
+
+M4 include `MixerController`/`MixerPort` nel core per stato immutabile e comandi
+mute/solo/volume tracce e master. L'adapter usa esclusivamente le API pubbliche
+del synth alphaTab; la UI presenta lo stato. Non è un Audio Engine esterno.
+Tracce che condividono canali hanno controlli collegati, con limite esplicito.
+
+L'utente ha accettato operativamente M4 dopo prova manuale; la suite browser
+ha quattro casi aperti documentati nell'handoff. M5 riparte dall'analisi in
+[M5_START.md](M5_START.md): non sono ancora scelti percorso audio, clock o
+nuovi contratti multisorgente. Non inferire tali scelte dal player M4.
+
 ## 7. Persistenza
 
 Modello locale:

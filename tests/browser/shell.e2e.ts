@@ -11,7 +11,7 @@ async function openScore(page: import('@playwright/test').Page, file = 'notes.gp
   await expect(page.locator('.score-host svg').first()).toBeVisible();
 }
 
-test('navigazione attiva, sezioni future dichiarate e trasporto realmente disabilitato', async ({ page }) => {
+test('navigazione attiva, sezioni future dichiarate e trasporto disabilitato senza documento', async ({ page }) => {
   await page.goto('/');
   const navigation = page.getByRole('navigation', { name: 'Main navigation' });
   await expect(navigation.getByRole('button', { name: 'Practice', exact: true })).toHaveAttribute('aria-current', 'page');
@@ -28,10 +28,10 @@ test('navigazione attiva, sezioni future dichiarate e trasporto realmente disabi
   const transport = page.getByRole('contentinfo', { name: 'Playback', exact: true });
   for (const button of await transport.getByRole('button').all()) await expect(button).toBeDisabled();
   for (const input of await transport.locator('input, select').all()) await expect(input).toBeDisabled();
-  await expect(transport).toContainText('Playback controls are not available yet.');
+  await expect(transport).toContainText('Open a tablature to enable playback.');
   await page.getByRole('button', { name: 'IT', exact: true }).click();
   await expect(page.getByRole('navigation', { name: 'Navigazione principale' }).getByRole('button', { name: 'Studio', exact: true })).toHaveAttribute('aria-current', 'page');
-  await expect(page.getByText('I controlli di riproduzione non sono ancora disponibili.')).toBeVisible();
+  await expect(page.getByText('Apri una tablatura per abilitare la riproduzione.')).toBeVisible();
 });
 
 test('collasso dei pannelli e navigazione conservano la tablatura e le tracce reali', async ({ page }) => {
@@ -46,7 +46,7 @@ test('collasso dei pannelli e navigazione conservano la tablatura e le tracce re
   await expect(page.locator('.score-host svg').first()).toBeVisible();
   await page.getByRole('button', { name: 'Expand tracks panel', exact: true }).click();
   const tracks = page.getByRole('complementary', { name: 'Track controls' });
-  for (const control of await tracks.locator('button:disabled, input').all()) await expect(control).toBeDisabled();
+  for (const control of await tracks.locator('.track-controls button, input').all()) await expect(control).toBeEnabled({ timeout: 15000 });
   await page.getByRole('navigation').getByRole('button', { name: 'Settings', exact: true }).click();
   await expect(page.getByRole('heading', { name: 'Settings', exact: true })).toBeVisible();
   await page.getByRole('navigation').getByRole('button', { name: 'Practice', exact: true }).click();
@@ -107,7 +107,7 @@ test('tema modificabile anche con localStorage vietato', async ({ page }) => {
   await expect(page.getByLabel('Aspetto', { exact: true })).toHaveValue('dark');
 });
 
-test('tre modalità e zoom operano sulla partitura reale senza abilitare il playback', async ({ page }) => {
+test('tre modalità e zoom operano sulla partitura reale con il player disponibile', async ({ page }) => {
   const errors: string[] = [];
   page.on('pageerror', (error) => errors.push(error.message));
   await openScore(page);
@@ -127,7 +127,7 @@ test('tre modalità e zoom operano sulla partitura reale senza abilitare il play
   await expect(page.getByLabel('Zoom', { exact: true })).toHaveValue('1.25');
   await expect(page.locator('.score-host svg').first()).toBeVisible();
   await expect(page.locator('.at-surface')).toHaveCount(1);
-  await expect(page.getByRole('button', { name: 'Play', exact: true })).toBeDisabled();
+  await expect(page.getByRole('button', { name: 'Play', exact: true })).toBeEnabled({ timeout: 15000 });
   expect(errors).toEqual([]);
   const fullscreen = page.getByRole('button', { name: 'Enter fullscreen', exact: true });
   if (await page.evaluate(() => document.fullscreenEnabled)) {

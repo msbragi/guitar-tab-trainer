@@ -1,216 +1,228 @@
 # Guitar Tab Trainer — Session handoff
 
-Aggiornato il **16 novembre 2026**. Consolidamento prima di M4: nessuna nuova
-funzionalità, nessun commit o push eseguito durante questa attività.
+Aggiornato il **16 novembre 2026**, dopo M4 e la finalizzazione Track Mixer/UI.
+**L'utente ha provato l'app e riferito: «It seems all ok». M4 è accettata
+operativamente come baseline per iniziare l'analisi M5 nella prossima sessione.**
+Questo riscontro non rende verdi i test falliti e non certifica latenze,
+sincronizzazione o qualità timbrica. M5 non è stata implementata.
 
-## 1. Stato attuale
+## 1. Ripartire da qui
 
-M0–M3, rinomina in **Guitar Tab Trainer**, localizzazione EN/IT e UI shell
-responsive sono completate. **M4 non è iniziata**: il player alphaTab è
-disabilitato e tutti i controlli di playback/mixer della shell sono inattivi.
+1. Leggere `AGENTS.md`, `TODO.md`, questo documento, `docs/ARCHITECTURE.md`,
+   `docs/M4_PLAYBACK.md` e **`docs/M5_START.md`**.
+2. Controllare branch/HEAD e working tree senza sovrascrivere le modifiche.
+3. Iniziare analisi e proposta M5: confronto PCM/MIDI/prerendering,
+   autorità temporale, vincoli e misure. Non scegliere implicitamente un
+   Audio Engine o un runtime desktop; concordare il percorso prima di implementarlo.
+4. Non riprendere automaticamente la lunga campagna di test M4: l'utente
+   ha chiesto di fermarla e preferisce provare l'app personalmente.
 
-L'applicazione corrente è client Angular nel browser, servibile localmente.
-Non sono presenti backend, SQLite, runtime desktop o Audio Engine nativo.
-Il target desktop Windows descritto in ARCHITECTURE.md resta una direzione
-futura, non una capacità del prototipo attuale.
+Il prompt pronto per la nuova conversazione è in `M5_START.md`.
 
-Git all'inizio del consolidamento: branch `main`, HEAD
-`55ed3af44b0f99782b187d635fc7ab0e52552c6f` (`UI disposition`), working tree e
-indice puliti. Non risultavano modifiche non pertinenti. Questa attività
-aggiorna soltanto TODO.md, README.md e questo handoff; il codice resta invariato.
-Commit e push sono riservati all'utente.
+## 2. Preferenze e autorizzazioni dell'utente
 
-Stato finale verificato, senza staging:
+- Per correzioni semplici di UI/CSS, procedere dopo l'analisi senza chiedere
+  ogni volta conferma. Chiedere conferma per modifiche a core, librerie o
+  moduli quando non siano già esplicitamente autorizzate dal task.
+- Rispettare le fasi di AGENTS.md; evitare richieste ripetute per attività
+  già autorizzate. M5 richiede un piano per le decisioni audio/clock.
+- L'utente ha interrotto le verifiche automatiche del mixer e ha preferito
+  il test manuale. Dopo la prova ha dato riscontro positivo e chiesto questo handoff.
+- Non rilanciare suite browser estese solo per consolidare la sessione.
+  Per M5 concordare verifiche mirate coerenti con le misure di sincronizzazione.
+- Nessun commit/push. Non fermare il server hot reload dell'utente sulla 4200.
+- Qualità timbrica della SoundFont fuori dall'attività appena conclusa.
 
-```text
- M README.md
- M TODO.md
-?? docs/SESSION_HANDOFF.md
-```
+## 3. Repository e ambiente
 
-Nessuna modifica non pertinente o artefatto generato incluso nelle modifiche.
+Workspace: `/workspace/tools/guitar-practice`, Debian WSL2 / ambiente Linux.
+Branch di riferimento `main`; HEAD verificato **`e318e26` — First stage completed**.
+Le modifiche M4 e mixer/UI sono ancora nella working tree, incluse numerose
+aggiunte non tracciate. Nessuno staging, commit o push eseguito dall'agente.
+Non fare reset/clean e non confondere queste modifiche con lavoro estraneo.
+`55ed3af` nei vecchi riepiloghi è un riferimento storico.
 
-## 2. Architettura e decisioni consolidate
+Versioni fissate: Node 22.22.0, pnpm 10.34.9, Angular 21.2.26,
+CLI/build 21.2.30, TypeScript 5.9.3, alphaTab **1.9.0**, Transloco 8.4.0,
+Playwright 1.65.1. Nessuna dipendenza aggiunta/aggiornata per M4 o mixer.
+Manifest e lockfile non sono stati cambiati da queste attività.
 
-| Modulo | Responsabilità e confini |
+In questa sessione pnpm era disponibile tramite
+`/tmp/guitar-practice-tooling/node_modules/.bin/pnpm`; è tooling temporaneo,
+non presumere che sopravviva al riavvio. Preferire pnpm/Corepack già presenti;
+non reinstallare o aggiornare dipendenze per abitudine.
+
+L'app è Angular nel browser, servibile localmente. Non ci sono backend,
+SQLite, runtime desktop, Audio Engine esterno o backing sincronizzata.
+Il target Windows resta futuro. `audio-engine` e `study-project` sono directory
+riservate, non pacchetti attivi con responsabilità già stabilite.
+
+## 4. Stato implementato e confini
+
+| Modulo | Responsabilità |
 |---|---|
-| `packages/core` | TypeScript puro: `ScoreController`, contratti `ScoreLoader`/`ScoreSource`, stato e metadati. Nessuna dipendenza Angular, alphaTab, DOM o storage concreto. |
-| `packages/alphatab-adapter` | Unico accesso diretto ad alphaTab. Parsing, rendering, ciclo di vita e impostazioni di vista tramite API pubbliche. Espone metadati e `ScoreViewMode`, senza esportare il modello alphaTab alla UI. |
-| `apps/web` | Componenti standalone, composizione della sessione, layout, preferenze, localizzazione e API browser. `ScoreSession` collega core e adapter; i componenti di presentazione non interpretano dati musicali. |
+| `packages/core` | TypeScript puro: `ScoreController`, `TransportController`, `MixerController`, contratti ed eventi applicativi. Nessun Angular, alphaTab, DOM o storage concreto. |
+| `packages/alphatab-adapter` | Unico accesso diretto alle API pubbliche di alphaTab: parsing, rendering, player, mixer del synth, risorse e lifecycle. Nessun fork. |
+| `apps/web` | `ScoreSession` compone controller e adapter e proietta snapshot readonly in signal; componenti per presentazione/interazione, lingua e tema. |
 
-Direzione delle dipendenze: UI → core e adapter; adapter → core e alphaTab.
-Il core riceve il proprio port tramite composizione, senza importare l'adapter.
+Dipendenze: UI → core/adapter; adapter → core/alphaTab. Il core riceve i port
+per composizione; nessun modello alphaTab attraversa il confine UI.
+File GP originali intatti. Il controllo dei confini è `pnpm check:boundaries`.
 
-Decisioni operative:
+### Caricamento e UI M0–M3
 
-- Monorepo pnpm con `workspace:*`, lockfile unico e pacchetti privati.
-  Gli scope tecnici `@guitar-practice/*` e la cartella del repository sono
-  intenzionalmente conservati dopo la rinomina del prodotto.
-- `angular.json` alla root configura soltanto `apps/web`; i pacchetti TS
-  vengono compilati con `tsc` ed espongono l'entry point pubblico in `dist`.
-- Prebundling del dev server disabilitato per la risoluzione delle dipendenze
-  dichiarate nei singoli pacchetti pnpm. Nessun hoisting aggiuntivo.
-- alphaTab stabile **1.9.0**, esterno e non modificato. L'analisi storica in
-  [ALPHATAB_ANALYSIS.md](ALPHATAB_ANALYSIS.md) riguarda un checkout **1.10.0**:
-  non considerarla una verifica di parità della release installata. I link
-  `packages/alphatab/...` in quel documento sono riferimenti al checkout esterno.
-- Rendering sul main thread (`useWorkers: false`), lazy loading disabilitato,
-  player disabilitato. `load()` ricrea l'istanza del renderer; `setView()`
-  aggiorna la presentazione del documento in memoria. File GP originali intatti.
-- Le modalità usano proprietà pubbliche `Staff.showStandardNotation` e
-  `Staff.showTablature`; lo zoom usa `settings.display.scale`, `updateSettings()`
-  e `render()`. Nessun uso del deprecato `display.staveProfile`.
-- Navigazione locale di shell, senza router URL. Il viewer resta montato
-  passando fra sezioni, conservando il documento caricato.
-- Nessun framework UI aggiuntivo; CSS variables condivise e icone SVG locali.
-  Foglio della notazione sempre chiaro, larghezza minima 720px e scroll interno
-  quando il viewport è stretto.
-- Errori di dominio tramite `ScoreLoadError` e codici neutrali; la UI traduce
-  i codici. `ScoreState.message` è diagnostica, non testo da mostrare direttamente.
+- File GP locali, parsing, metadati, rendering SVG di tutte le tracce,
+  gestione errori e caricamenti successivi.
+- Score & Tab / Tab Only / Notation Only, zoom 75–150%, fullscreen browser.
+  Tracce senza corde mantengono la notazione anche in Tab Only.
+- Shell responsive, pannelli collassabili e navigazione locale senza router URL.
+  Il viewer resta montato passando alle altre sezioni.
+- Transloco EN/IT locale; tema System/Light/Dark. Solo lingua e tema persistono
+  in localStorage; storage vietato non blocca la UI. Il reload perde il GP.
+- Library, Projects, Virtual Rig, recenti e preferiti restano predisposizioni
+  esplicitamente non disponibili.
 
-## 3. Funzionalità implementate e verificate
+### Playback M4
 
-- Lettura di file selezionati dall'utente, parsing, titolo/artista/tracce/battute
-  e rendering SVG. Stati idle/loading/ready/error, recupero dopo errori,
-  sostituzione delle istanze e protezione dei byte originali.
-- Tre modalità Score & Tab / Tab Only / Notation Only e zoom 75–150%.
-  Tracce senza corde mantengono la notazione in Tab Only. Fullscreen browser
-  disponibile dove supportato.
-- Header con logo/nome/versione, navigazione e lingua; pannelli laterali
-  collassabili; menu mobile; tracce esclusivamente dal documento reale.
-- Library, Projects e Virtual Rig dichiarati non disponibili. Nessun dato
-  dimostrativo presentato come reale. Recenti/preferiti, mute/solo/volumi e
-  barra di trasporto sono solo predisposizioni disabilitate.
-- Transloco **8.4.0** confinato alla UI; cataloghi locali
-  `apps/web/public/i18n/en.json` e `it.json`, distribuiti in `assets/i18n/`.
-  Priorità: preferenza salvata → prima lingua browser supportata → EN.
-  Inglese default/fallback, cambio runtime senza reload, contenuti e metadati
-  della tablatura non tradotti.
-- Temi System (default), Light e Dark. Script sincrono nel `<head>` prima di
-  CSS/Angular e servizio Angular per mantenere il tema. System segue anche
-  i cambiamenti del sistema durante la sessione.
-- Soltanto preferenze UI in localStorage: `guitar-practice.language` e
-  `guitar-tab-trainer.theme`. Storage bloccato non impedisce il cambio nella
-  sessione. Nessuna persistenza dei file o dei progetti di studio.
-- Font Bravura, licenze e JSON serviti localmente; nessuna CDN richiesta.
+- Synth forzato con `PlayerMode.EnabledSynthesizer`, anche con backing incorporata.
+- Play/pausa, stop, seek, velocità 25–200%, loop A/B modificabile in esecuzione.
+  Stop torna ad A se il loop è attivo, altrimenti all'inizio del brano.
+- A/B usano tick della sequenza eseguita; B è esclusivo. Un nuovo range valido
+  mantiene la posizione se interna, altrimenti rientra ad A. Intervalli invalidi
+  sono rifiutati dal core senza sostituire il precedente range.
+- Il core possiede lo stato applicativo; il player è l'autorità temporale
+  della singola sorgente. Nessun timer applicativo simula il clock.
+- Tick di esecuzione, coordinate di notazione e millisecondi alla velocità
+  corrente sono distinti. Non usare battuta/BPM iniziale come conversione generale.
+- Da fermo il core ignora notifiche di campioni tardivi (`isSeek=false`) e
+  accetta seek espliciti. I test dei seek ammettono arrotondamento di 2 tick.
+- Preparazione audio dopo rendering, timeout 30 s. Errori audio conservano la
+  partitura. Reset/destroy chiudono output, eventi, timer e worker tramite API pubbliche.
+- `Environment.initializeMain` configura factory con URL locali espliciti;
+  nessun plugin Vite aggiunto. Rendering main thread, synth worker e AudioWorklet.
+- Font, SONiVOX SF2, licenze e script originali copiati da Angular in
+  `assets/alphatab/`; nessuna CDN. Offline con server locale, senza PWA.
 
-## 4. Verifiche del consolidamento
+### Feedback visivo e centratura
 
-Eseguite dalla root sulla revisione sopra indicata, senza modifiche al codice:
+I cursori si muovevano ma erano trasparenti: aggiunti CSS globali circoscritti
+in `apps/web/src/styles.css` per `.at-cursor-bar`, `.at-cursor-beat` e
+`.at-highlight *`. L'utente ne ha confermato il funzionamento. La carta resta
+chiara anche col tema dark. Le dimensioni/trasformazioni del cursore restano
+controllate da alphaTab.
 
-| Comando | Esito |
+Nell'analisi precedente il resize nativo risultava funzionante e lo scroll
+verticale interno seguiva il playback. La centratura non è stata modificata:
+il foglio ha minimo 720 px e overflow interno. Con Score + Tab e molte tracce,
+un sistema può superare l'altezza visibile; Continuous può spostare la vista
+anche dopo rerender a playback fermo. Questi aspetti restano osservazioni UI,
+non una modifica autorizzata/implementata né una prova di sync audio.
+
+### Mixer e finalizzazione UI
+
+- `MixerController`/`MixerPort` nel core; mute/unmute, solo/unsolo cumulativo,
+  volume traccia e master nel pannello destro/barra inferiore.
+- Il mute esplicito prevale sul solo; rimuovere l'ultimo solo ripristina le
+  altre tracce non mute. `excluded` è derivato nel core.
+- Volume tracce 0–100%, default da `PlaybackInformation.volume / 16`;
+  master 100%. Nuovo file azzera mute/solo e ripristina i default. Cambio vista,
+  zoom, tema, lingua o sezione mantiene lo stato del documento corrente.
+- Adapter: `changeTrackMute`, `changeTrackSolo`, `changeTrackVolume`, `masterVolume`.
+  Nessun mixer audio personalizzato. I comandi aggiornano lo stato dopo invio
+  riuscito; queste API non offrono un ack acustico per ogni variazione.
+- Canali condivisi: `mixer-tracks.ts` raggruppa gli indici collegati, anche
+  transitivamente. I controlli sono sincronizzati e mostrano un avviso;
+  il primo volume del gruppo è il default comune. L'isolamento per traccia
+  non è garantito quando il motore usa gli stessi canali MIDI.
+- Tooltip nativi `title` tradotti con Transloco; label/testi e `aria-pressed`
+  restano separati. Aggiornamento dinamico EN/IT verificato nei test passati.
+- Trasporto compatto orizzontale desktop, wrapping responsive, pulsanti mobili
+  44×44 px. Placeholder precedente rimosso, BPM readonly, guida A/B accessibile.
+
+## 5. Verifiche: distinguere stato attuale e risultati storici
+
+| Verifica più recente | Risultato |
 |---|---|
-| `pnpm build` | Passato; output in `apps/web/dist/web/browser`. |
-| `pnpm typecheck` | Passato per core, adapter e UI; verifica i sorgenti di produzione. |
-| `pnpm test` | 45 test passati in 7 file; include i controlli dei confini. |
-| `pnpm check:boundaries` | Passato anche come controllo separato di manifest e import dei sorgenti. |
-| `pnpm exec playwright test --reporter=line` | 21 test Chromium passati sulla build di produzione, in 41,4 s. |
-| `git diff --check` | Passato al controllo iniziale e finale. |
+| Build produzione | Passata; output `apps/web/dist/web/browser`, circa 1,50 MB raw / 314 kB compressi stimati. |
+| Typecheck produzione | Passato per core, adapter e UI. |
+| Confini | Passati. |
+| Vitest | **66 test passati in 12 file**. |
+| Browser dopo mixer/UI | **30 passati, 4 falliti su 34**; non dichiarare suite verde. |
+| Prova manuale utente | Riscontro generale positivo: «It seems all ok»; accettata baseline M4 per avviare M5. |
 
-Vitest esegue i test TS tramite trasformazione; il typecheck non è un controllo
-separato dei file di test. I test Node coprono core, parsing, lifecycle,
-cataloghi, preferenze linguistiche/tema e visibilità degli staff.
+I precedenti 57 test Node / 27 browser e i sei scenari dev sulla 4174 erano
+verdi prima dell'aggiunta del mixer. Sono risultati storici, non sostituiscono
+l'esito attuale 30/34. Typecheck separato dei sorgenti di produzione;
+Vitest trasforma i test, senza un typecheck completo separato dei test stessi.
 
-La suite browser comprende 21 scenari: corpus GP reale, errori e caricamenti
-ripetuti, EN/IT, storage, fallback, navigazione, pannelli, temi prima di Angular,
-modalità, zoom, fullscreen quando supportato e layout mobile.
-Corpus di quattro fixture GP3/GP5/GP7 con provenienza, licenza e hash in
-[tests/fixtures/alphatab/README.md](../tests/fixtures/alphatab/README.md).
-Le prove non certificano la fedeltà musicale di ogni effetto.
+### Quattro scenari browser aperti
 
-## 5. Problemi conosciuti e limiti
+1. `mixer.e2e.ts` — fixture canali condivisi: manca l'avviso atteso. Ispezione
+   via parser pubblico ha mostrato che `m4-mixer-linked.gp` rientra con canali
+   distinti 0/1, 2/3, 4/5, nonostante il generatore richieda condivisione.
+   La fixture non esercita il caso dichiarato. Il mapper è coperto da test Node.
+2. `mixer.e2e.ts` — segnale dopo unmute: il segnale iniziale c'è, tutti i mute
+   producono silenzio, ma riattivare la prima traccia non ripristina il segnale
+   atteso. Causa non chiusa; non attribuirla con certezza al prodotto o al test.
+   Ispezione della fixture ha rilevato note/voci duplicate fra tracce e programma
+   letto 25 invece dell'80 richiesto. Il generatore usa più `loadAlphaTex()`:
+   questi reset degli ID sono una possibile origine delle collisioni all'export.
+3. Responsive 1024 px: l'helper `open()` cerca un pulsante tramite ruolo dentro
+   il pannello tracce collassato, quindi nascosto; fallisce prima delle misure layout.
+4. Responsive 390 px: stesso problema nell'helper. Non è una prova di overflow
+   o di errata altezza della barra; queste misure non sono state raggiunte.
 
-Nessun errore bloccante rilevato dalle suite eseguite. Restano questi limiti:
+File: `tests/browser/mixer.e2e.ts`,
+`packages/alphatab-adapter/test/generate-m4-mixer.mjs`,
+`tests/fixtures/m4-mixer.gp`, `tests/fixtures/m4-mixer-linked.gp`.
+I file sono nuovi del progetto, non corpus GP upstream. Il generatore e le
+fixture non sono stati corretti dopo l'interruzione richiesta dall'utente.
+Non rigenerare/sostituire dati né modificare alphaTab per far passare questi test.
+Un'eventuale ripresa deve separare errori delle fixture da difetti riprodotti su GP reali.
 
-- Nessun playback o audio verificato: non è ancora implementato. Non abilitare
-  i controlli della shell prima di collegarli a funzionalità reali.
-- Performance di rendering su partiture grandi non misurate; elaborazione sul
-  main thread. Build iniziale circa 1,48 MB raw / 310 kB compressi stimati.
-- Test browser in Chromium Linux; altri browser, Windows, driver/dispositivi
-  audio e prestazioni native non verificati. GP4 e GPX fuori dal corpus attuale.
-- Fullscreen dipende dal browser. Dialogo file nativo nella lingua del sistema.
-- Navigazione senza URL, pannelli non persistiti, documento solo in memoria:
-  il reload perde la tablatura caricata e conserva le sole preferenze UI.
-- Offline significa app servita localmente con i propri asset, non PWA con
-  avvio offline da un sito remoto. Nessun accesso filesystem desktop persistente.
-- Dev server su 4200 usato dall'utente con hot reload: non fermarlo. I test
-  browser del consolidamento usano un server statico separato sulla 4173.
-  `GUITAR_PRACTICE_TEST_DEV=1` tenta di avviare un nuovo server e confligge se
-  la 4200 è già occupata; non usarlo sulla sessione attiva dell'utente.
-- Le API/audio dell'analisi 1.10.0 vanno ricontrollate sulla dipendenza 1.9.0.
-  Eventi di posizione non sono una garanzia di scheduling audio preciso;
-  player synth e backing track non costituiscono un mixer multisorgente.
-- Licenza del progetto applicativo ancora da scegliere; licenze e attribuzione
-  alphaTab/asset restano quelle upstream.
+Questi casi sono debito di verifica documentato, non un motivo per riaprire
+automaticamente M4 prima dell'analisi M5 richiesta dall'utente.
 
-## 6. Prossima milestone: M4, playback sintetizzato di riferimento
+## 6. Limiti che restano aperti
 
-**Solo per pianificare la prossima sessione; questo consolidamento non autorizza
-l'avvio di M4.** Riprendere le fasi di AGENTS.md e concordare il perimetro prima
-dell'implementazione. Le decisioni ordinarie sono delegate; cambiamenti
-architetturali rilevanti richiedono approvazione esplicita.
+Nessuna sincronizzazione multisorgente, misurazione drift/latency o garanzia
+sample-accurate. Nessun supporto certificato Windows/ASIO, altri browser,
+output ScriptProcessor o prove prolungate sotto carico. GP4/GPX e prestazioni
+su file grandi non coperti. Qualità timbrica ed effetti non certificati;
+SoundFont fuori dall'attività di finalizzazione.
 
-Perimetro già previsto in TODO.md:
+Il riscontro manuale è generale: non inventare dispositivo/browser usati,
+soglie numeriche o esecuzione di ogni punto della checklist specialistica.
+Licenza applicativa ancora da scegliere; licenze e attribuzione upstream preservate.
 
-1. Definire nel core comandi, stato e contratto minimo del trasporto,
-   indipendenti da Angular e dal modello alphaTab. Distinguere coordinate della
-   notazione, tick di esecuzione e tempo, incluse ripetizioni e cambi di tempo.
-2. Implementare attraverso l'adapter le API pubbliche di playback sintetizzato:
-   play, pausa, stop, seek, velocità e loop. Chiarire autorità del trasporto e
-   lifecycle su caricamento di un nuovo documento e distruzione della vista.
-3. Distribuire localmente SoundFont e risorse worker/worklet necessarie;
-   verificare l'integrazione con il builder Angular e il contesto sicuro browser.
-   Non assumere che il plugin Vite sia direttamente applicabile al dev server Angular.
-4. Collegare soltanto i controlli effettivamente implementati, mantenendo gli
-   altri disabilitati. Conservare UI, temi, lingue, caricamento e rendering M3.
-5. Testare comandi/eventi e stati; verificare playback udibile dopo gesto utente,
-   disponibilità degli asset locali, stop/seek/velocità/loop e cleanup.
+## 7. Tooling e comandi per la prossima sessione
 
-Esclusi da M4: backing track e sintesi simultanee, clock multisorgente, Audio
-Engine nativo, acquisizione chitarra/ASIO, SQLite, runtime desktop, VST3,
-pitch detection e DSP avanzato. M5 valuta PCM/MIDI/prerendering e clock condiviso;
-M6 implementa la backing sincronizzata sul percorso validato.
-
-## 7. Ripartenza e riferimenti per la prossima sessione
-
-Leggere [AGENTS.md](../AGENTS.md), [ARCHITECTURE.md](ARCHITECTURE.md),
-[ALPHATAB_ANALYSIS.md](ALPHATAB_ANALYSIS.md), [TODO.md](../TODO.md) e questo file.
-ARCHITECTURE.md descrive anche componenti futuri: lo stato implementato è quello
-riassunto qui e nel [README.md](../README.md).
-
-Versioni: Node 22.22.0, pnpm 10.34.9, Angular 21.2.26, CLI/build 21.2.30,
-TypeScript 5.9.3, alphaTab 1.9.0, Transloco 8.4.0, Playwright 1.65.1.
-Controllare `.nvmrc`, `packageManager` e lockfile; non aggiornare dipendenze
-incidentalmente per iniziare M4.
+Non eseguire tutto automaticamente: sono riferimenti operativi.
 
 ```sh
-pnpm install --frozen-lockfile
+pnpm dev
 pnpm build
 pnpm typecheck
-pnpm test
 pnpm check:boundaries
-pnpm exec playwright install chromium  # solo se il browser non è già disponibile
-pnpm test:browser
-pnpm dev
-```
-
-In questo ambiente gestito pnpm è disponibile tramite
-`/tmp/guitar-practice-tooling/node_modules/.bin/pnpm`; è tooling temporaneo,
-non una dipendenza del repository. Usare il pnpm installato/Corepack nella
-sessione successiva se quella directory non esiste più. Nessuna installazione
-aggiuntiva è stata necessaria per questo consolidamento.
-
-Per il Chromium di sistema, la suite è stata lanciata con:
-
-```sh
+pnpm test
 PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH=/usr/bin/chromium pnpm exec playwright test --reporter=line
 ```
 
-Porte/browser possono richiedere permessi estesi nel sandbox. Il test server
-attende il messaggio di avvio su stdout: il probe preliminare di una porta
-chiusa restava sospeso nell'ambiente. Non ripristinare quel probe senza verifica.
+La 4200 è riservata al dev server dell'utente: non fermarlo e controllare prima
+se esiste già. Test di produzione sulla 4173, prove isolate su altra porta.
+`GUITAR_PRACTICE_TEST_DEV=1` usa la 4200 e può confliggere col server attivo.
+Le porte/browser possono richiedere permessi estesi nel sandbox. Il server di
+Playwright attende stdout di avvio: non ripristinare il vecchio probe HTTP.
 
-`node_modules`, `dist`, `.angular`, `test-results` e report Playwright sono
-ignorati; screenshot e trace vengono rigenerati. Lo schizzo `docs/GTT-UI.png`
-e i fixture del corpus sono invece versionati. Non pulire o aggiungere artefatti
-generati al commit. Verificare `git status` e lasciare commit/push all'utente.
+Log temporanei, se ancora disponibili:
+`/tmp/guitar-practice-m4-finalize-build.log`,
+`/tmp/guitar-practice-m4-finalize-typecheck.log`,
+`/tmp/guitar-practice-m4-finalize-unit.log`.
+Trace/error-context/screenshot in `test-results/` sono artefatti ignorati e
+possono essere sovrascritti. La configurazione `/tmp/guitar-practice-m4-dev.config.ts`
+era diagnostica e non è una configurazione supportata da riusare alla cieca.
+I server di test precedenti erano gestiti dalla suite; quello isolato 4174
+rimasto dopo SIGTERM era stato chiuso. Non presumere lo stato delle porte domani.
+
+Nessun install, build, test, commit o push eseguito durante questo aggiornamento
+finale della documentazione. Sono preservate le modifiche applicative della sessione.

@@ -119,6 +119,36 @@
     "loopB": "Set loop end B",
     "speed": "Speed",
     "tempo": "Tempo",
-    "volume": "Master volume"
+    "volume": "Master volume",
+    "pause": "Pause",
+    "loopHint": "Use the timeline, then A or B, to set the loop.",
+    "states": {
+      "idle": "Open a tablature to enable playback.",
+      "preparing": "Preparing audio…",
+      "stopped": "Ready to play",
+      "playing": "Playing",
+      "paused": "Paused",
+      "error": "Audio unavailable. Reopen the tablature to retry."
+    },
+    "errors": {
+      "audio-unavailable": "Unable to start audio. Check local audio resources and browser permissions.",
+      "prepare-timeout": "Audio preparation timed out. Reopen the tablature to retry.",
+      "playback-failed": "Playback failed. Reopen the tablature to retry.",
+      "invalid-loop": "A must precede B. The previous loop is unchanged.",
+      "invalid-command": "Invalid playback value."
+    }
+  },
+  "mixer": {
+    "unmute": "Unmute {{name}}",
+    "unsolo": "Unsolo {{name}}",
+    "trackControls": "Mixer: {{name}}",
+    "hint": "Solo is cumulative. Muted tracks remain silent, including in solo.",
+    "waiting": "Mixer becomes available when audio is ready.",
+    "excluded": "Excluded by mute or solo selection",
+    "linked": "Controls linked: these tracks share MIDI channels.",
+    "errors": {
+      "mixer-failed": "Unable to change the mixer. Try again or reopen the tablature.",
+      "invalid-volume": "Volume must be between 0% and 100%."
+    }
   }
 }

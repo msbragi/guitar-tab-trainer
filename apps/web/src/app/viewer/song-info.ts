@@ -13,7 +13,7 @@ import { Icon } from '../shared/icon.js';
           @if (current.score.artist) { <p class="artist">{{ current.score.artist }}</p> }
           <p class="song-metrics">{{ (current.score.barCount === 1 ? 'score.bar' : 'score.bars') | transloco: { count: current.score.barCount } }} ·
             {{ (current.score.tracks.length === 1 ? 'score.track' : 'score.tracks') | transloco: { count: current.score.tracks.length } }}</p></div>
-        <button class="icon-button favorite-button" type="button" disabled [attr.aria-label]="'shell.favoriteUnavailable' | transloco"><gp-icon name="star" /></button>
+        <button class="icon-button favorite-button" type="button" disabled [title]="'shell.favoriteUnavailable' | transloco" [attr.aria-label]="'shell.favoriteUnavailable' | transloco"><gp-icon name="star" /></button>
       </section>
     } @else {
       <div class="practice-heading"><div><p class="eyebrow">{{ 'app.eyebrow' | transloco }}</p><h2>{{ 'shell.practiceTitle' | transloco }}</h2></div><span class="local-badge"><span class="status-dot"></span>{{ 'footer.local' | transloco }}</span></div>
