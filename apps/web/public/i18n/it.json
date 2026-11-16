@@ -4,7 +4,11 @@
     "eyebrow": "IL TUO SPAZIO DI STUDIO",
     "intro": "Apri una tablatura Guitar Pro dal tuo computer."
   },
-  "language": { "label": "Lingua", "english": "Inglese", "italian": "Italiano" },
+  "language": {
+    "label": "Lingua",
+    "english": "Inglese",
+    "italian": "Italiano"
+  },
   "file": {
     "section": "Caricamento tablatura",
     "choose": "Scegli una tablatura",
@@ -38,5 +42,83 @@
     "load-failed": "Impossibile caricare la tablatura.",
     "retry": "Scegli un altro file per riprovare."
   },
-  "footer": { "local": "Lettura locale", "poweredBy": "Realizzato con" }
+  "footer": {
+    "local": "Lettura locale",
+    "poweredBy": "Realizzato con"
+  },
+  "nav": {
+    "practice": "Studio",
+    "library": "Libreria",
+    "projects": "Progetti",
+    "rig": "Virtual Rig",
+    "settings": "Impostazioni"
+  },
+  "shell": {
+    "tagline": "Impara · Esercitati · Suona",
+    "navigation": "Navigazione principale",
+    "toggleNavigation": "Mostra o nascondi navigazione",
+    "skipToContent": "Vai al contenuto",
+    "libraryPanel": "Pannello file",
+    "tracksPanel": "Controlli delle tracce",
+    "expandLibrary": "Espandi barra laterale",
+    "collapseLibrary": "Comprimi barra laterale",
+    "expandTracks": "Espandi pannello tracce",
+    "collapseTracks": "Comprimi pannello tracce",
+    "openTab": "Apri tablatura",
+    "recent": "File recenti",
+    "favorites": "Preferiti",
+    "recentUnavailable": "I file recenti saranno disponibili in un aggiornamento futuro.",
+    "favoritesUnavailable": "I preferiti saranno disponibili in un aggiornamento futuro.",
+    "noTracks": "Apri una tablatura per visualizzarne le tracce.",
+    "mixerUnavailable": "Mute, solo e volume delle tracce non sono ancora disponibili.",
+    "mute": "Disattiva {{name}}",
+    "solo": "Solo {{name}}",
+    "trackVolume": "Volume traccia: {{name}}",
+    "favoriteUnavailable": "I preferiti non sono ancora disponibili",
+    "practiceTitle": "Il tuo spazio di studio",
+    "comingLater": "Non ancora disponibile",
+    "libraryUnavailable": "Qui troverai la tua libreria musicale. La gestione della libreria non è ancora disponibile. La tablatura aperta rimane in Studio.",
+    "projectsUnavailable": "Qui troverai i progetti di studio. La gestione dei progetti non è ancora disponibile. La tablatura aperta rimane in Studio.",
+    "rigUnavailable": "Qui troverai il tuo rig virtuale. Il processamento del rig non è ancora disponibile. La tablatura aperta rimane in Studio.",
+    "backToPractice": "Torna a Studio",
+    "preferences": "Il tuo ambiente",
+    "settingsUnavailable": "Altre preferenze saranno disponibili in un aggiornamento futuro."
+  },
+  "theme": {
+    "label": "Aspetto",
+    "system": "Sistema",
+    "light": "Chiaro",
+    "dark": "Scuro",
+    "description": "Scegli un aspetto. Sistema segue la preferenza chiara o scura del tuo dispositivo.",
+    "saved": "La preferenza del tema viene salvata su questo dispositivo."
+  },
+  "viewer": {
+    "mode": "Modalità di visualizzazione",
+    "score-tab": "Spartito e tab",
+    "tab": "Solo tab",
+    "notation": "Solo notazione",
+    "zoom": "Zoom",
+    "zoomValue": "{{value}}%",
+    "fullscreen": "Apri a schermo intero",
+    "exitFullscreen": "Esci da schermo intero",
+    "fullscreenUnavailable": "Schermo intero non supportato da questo browser",
+    "fullscreenFailed": "Impossibile attivare o chiudere lo schermo intero.",
+    "emptyTitle": "Fai spazio al tuo prossimo riff.",
+    "formats": "Guitar Pro · GP3 / GP4 / GP5 / GPX / GP",
+    "modeHint": "Le tracce senza corde mantengono la notazione nella modalità Solo tab."
+  },
+  "transport": {
+    "title": "Riproduzione",
+    "unavailable": "I controlli di riproduzione non sono ancora disponibili.",
+    "previous": "Vai all'inizio",
+    "play": "Riproduci",
+    "stop": "Ferma",
+    "timeline": "Timeline di riproduzione",
+    "loop": "Loop",
+    "loopA": "Imposta inizio loop A",
+    "loopB": "Imposta fine loop B",
+    "speed": "Velocità",
+    "tempo": "Tempo",
+    "volume": "Volume generale"
+  }
 }

@@ -43,7 +43,7 @@ test('il corpus GP viene renderizzato con risorse locali e sostituzione delle is
     await expect(page.getByRole('status')).toContainText(`Tablatura pronta · ${fixture.file}`, { timeout: 35_000 });
     await expect(page.getByRole('heading', { level: 2 })).toHaveText(fixture.title || 'Tablatura senza titolo');
     await expect(page.getByLabel('Informazioni tablatura')).toContainText(`${fixture.bars} ${fixture.bars === 1 ? 'battuta' : 'battute'}`);
-    await expect(page.getByLabel('Tracce').getByRole('listitem')).toHaveText([...fixture.tracks]);
+    await expect(page.getByLabel('Tracce', { exact: true }).locator('.track-name')).toHaveText([...fixture.tracks]);
     await expect(page.locator('.score-host .at-surface')).toHaveCount(1);
     await expect(page.locator('.score-host svg').first()).toBeVisible();
     await expect(input).toBeEnabled();

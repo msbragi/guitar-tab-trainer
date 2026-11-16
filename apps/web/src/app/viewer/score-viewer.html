@@ -1,0 +1,44 @@
+@let current = session.state();
+<gp-song-info [state]="current" />
+<div class="score-workspace">
+  <div class="score-toolbar">
+    <div class="view-modes" role="group" [attr.aria-label]="'viewer.mode' | transloco">
+      @for (mode of modes; track mode) {
+        <button type="button" [attr.aria-pressed]="session.mode() === mode" [disabled]="current.status !== 'ready' || session.viewBusy()"
+          (click)="session.setView(mode, session.scale())">{{ ('viewer.' + mode) | transloco }}</button>
+      }
+    </div>
+    <div class="view-tools"><div class="zoom-control"><label for="score-zoom" class="visually-hidden">{{ 'viewer.zoom' | transloco }}</label>
+      <select id="score-zoom" [value]="session.scale()" [disabled]="current.status !== 'ready' || session.viewBusy()" (change)="zoom($event)">
+        @for (scale of scales; track scale) { <option [value]="scale" [selected]="scale === session.scale()">{{ 'viewer.zoomValue' | transloco: { value: scale * 100 } }}</option> }
+      </select></div>
+      <button class="icon-button" type="button" [disabled]="!fullscreenAvailable() || current.status !== 'ready'"
+        [attr.aria-label]="(fullscreen() ? 'viewer.exitFullscreen' : 'viewer.fullscreen') | transloco"
+        [title]="(fullscreenAvailable() ? 'viewer.fullscreen' : 'viewer.fullscreenUnavailable') | transloco" (click)="toggleFullscreen()"><gp-icon [name]="fullscreen() ? 'collapse' : 'expand'" /></button>
+    </div>
+  </div>
+  <div class="score-scroll">
+    <div class="status" role="status" aria-live="polite">
+      @switch (current.status) {
+        @case ('idle') { <p>{{ 'status.idle' | transloco }}</p> }
+        @case ('loading') { <p>{{ 'status.loading' | transloco: { fileName: current.fileName } }}</p> }
+        @case ('ready') { <p>{{ 'status.ready' | transloco: { fileName: current.fileName } }}</p> }
+      }
+    </div>
+    @if (current.status === 'error') { <p class="error" role="alert">{{ ('errors.' + current.code) | transloco }} {{ 'errors.retry' | transloco }}</p> }
+    @if (session.viewError(); as error) { <p class="error" role="alert">{{ ('errors.' + error) | transloco }}</p> }
+    @if (fullscreenError()) { <p class="error" role="alert">{{ 'viewer.fullscreenFailed' | transloco }}</p> }
+    @if (current.status === 'idle') {
+      <div class="score-empty"><span class="empty-symbol"><gp-icon name="guitar" /></span>
+        <p class="eyebrow">{{ 'shell.practiceTitle' | transloco }}</p><h3>{{ 'viewer.emptyTitle' | transloco }}</h3>
+        <p>{{ 'app.intro' | transloco }}</p><button class="primary-button" type="button" [disabled]="!session.available()" (click)="openTab.emit()"><gp-icon name="folder" />{{ 'file.choose' | transloco }}</button>
+        <span class="supported-formats">{{ 'viewer.formats' | transloco }}</span>
+      </div>
+    }
+    <section class="score-panel" [class.has-score]="current.status === 'ready'" [attr.aria-label]="'score.view' | transloco" [attr.aria-busy]="current.status === 'loading' || session.viewBusy()">
+      <div #scoreHost class="score-host"></div>
+    </section>
+    @if (current.status === 'ready') { <p class="view-hint">{{ 'viewer.modeHint' | transloco }}</p> }
+    <div class="score-attribution">{{ 'footer.poweredBy' | transloco }} <a href="https://alphatab.net" target="_blank" rel="noopener noreferrer">alphaTab</a></div>
+  </div>
+</div>

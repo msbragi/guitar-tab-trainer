@@ -20,7 +20,7 @@ test('inglese iniziale, cambio senza reload, metadati e renderer invariati, pers
   await expect(page.getByRole('status')).toHaveText('Tablatura pronta · effects.gp');
   await expect(page.getByLabel('Informazioni tablatura')).toContainText('32 battute');
   await expect(page.getByRole('heading', { level: 2 })).toHaveText('Effects');
-  await expect(page.getByLabel('Tracce').getByRole('listitem')).toHaveText(['Track 1']);
+  await expect(page.getByLabel('Tracce', { exact: true }).locator('.track-name')).toHaveText(['Track 1']);
   expect(await surface!.evaluate((element) => element === document.querySelector('.at-surface'))).toBe(true);
   expect(await page.locator('.score-host').innerHTML()).toBe(svg);
   expect(navigations).toBe(1);
@@ -43,7 +43,7 @@ test('traduce il placeholder del titolo assente e le quantità, conservando il n
   await page.getByRole('button', { name: 'IT', exact: true }).click();
   await expect(page.getByRole('heading', { level: 2 })).toHaveText('Tablatura senza titolo');
   await expect(page.getByLabel('Informazioni tablatura')).toContainText('1 battuta · 1 traccia');
-  await expect(page.getByLabel('Tracce').getByRole('listitem')).toHaveText(['Track 1']);
+  await expect(page.getByLabel('Tracce', { exact: true }).locator('.track-name')).toHaveText(['Track 1']);
 });
 
 test('i messaggi di errore già visibili cambiano lingua e il caricamento può riprendere', async ({ page }) => {

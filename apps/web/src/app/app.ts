@@ -1,58 +1,45 @@
 import { DOCUMENT } from '@angular/common';
-import { afterNextRender, Component, inject, signal, viewChild } from '@angular/core';
-import type { ElementRef, OnDestroy } from '@angular/core';
-import { ScoreController, ScoreLoadError } from '@guitar-practice/core';
-import type { ScoreState } from '@guitar-practice/core';
-import { AlphaTabScoreAdapter } from '@guitar-practice/alphatab-adapter';
+import { afterNextRender, Component, computed, ElementRef, inject, signal, viewChild } from '@angular/core';
 import { TranslocoPipe } from '@jsverse/transloco';
-import { LanguageService } from './i18n/language.service.js';
+import { ScoreSession } from './score-session.js';
+import { AppHeader } from './layout/app-header.js';
+import { LibraryPanel } from './layout/library-panel.js';
+import { TracksPanel } from './layout/tracks-panel.js';
+import { TransportBar } from './layout/transport-bar.js';
+import { SettingsPanel } from './layout/settings-panel.js';
+import { sections } from './layout/navigation.js';
+import type { Section } from './layout/navigation.js';
+import { ScoreViewer } from './viewer/score-viewer.js';
+import { Icon } from './shared/icon.js';
 
 @Component({
   selector: 'gp-app',
-  imports: [TranslocoPipe],
+  imports: [TranslocoPipe, AppHeader, LibraryPanel, TracksPanel, TransportBar, SettingsPanel, ScoreViewer, Icon],
   templateUrl: './app.html',
 })
-export class App implements OnDestroy {
-  readonly language = inject(LanguageService);
-  readonly state = signal<ScoreState>({ status: 'idle' });
-  readonly available = signal(false);
-  private readonly host = viewChild.required<ElementRef<HTMLElement>>('scoreHost');
+export class App {
+  readonly session = inject(ScoreSession);
+  readonly section = signal<Section>('practice');
+  readonly sidebarCollapsed = signal(false);
+  readonly tracksCollapsed = signal(false);
+  readonly sectionIcon = computed(() => sections.find((item) => item.id === this.section())!.icon);
+  readonly tracks = computed(() => { const state = this.session.state(); return state.status === 'ready' ? state.score.tracks : []; });
   private readonly document = inject(DOCUMENT);
-  private controller: ScoreController | undefined;
-  private adapter: AlphaTabScoreAdapter | undefined;
-  private unsubscribe: (() => void) | undefined;
+  private readonly fileInput = viewChild.required<ElementRef<HTMLInputElement>>('fileInput');
 
   constructor() {
     afterNextRender(() => {
-      this.adapter = new AlphaTabScoreAdapter(this.host().nativeElement, {
-        fontDirectory: new URL('assets/alphatab/font/', this.document.baseURI).href,
-      });
-      this.controller = new ScoreController(this.adapter);
-      this.unsubscribe = this.controller.subscribe((state) => {
-        if (state.status === 'loading') this.adapter?.reset();
-        this.state.set(state);
-      });
-      this.available.set(true);
+      this.sidebarCollapsed.set(this.document.defaultView?.matchMedia('(max-width: 1000px)').matches ?? false);
+      this.tracksCollapsed.set(this.document.defaultView?.matchMedia('(max-width: 1100px)').matches ?? false);
     });
   }
 
+  chooseFile(): void { this.section.set('practice'); this.fileInput().nativeElement.click(); }
   async openFile(event: Event): Promise<void> {
     const input = event.target as HTMLInputElement;
-    const file = input.files?.[0];
-    input.value = '';
-    if (!file || !this.controller) return;
-    await this.controller.load({
-      name: file.name,
-      read: async () => {
-        try { return new Uint8Array(await file.arrayBuffer()); }
-        catch { throw new ScoreLoadError('read-failed'); }
-      },
-    });
-  }
-
-  ngOnDestroy(): void {
-    this.unsubscribe?.();
-    this.controller?.dispose();
-    this.adapter?.destroy();
+    const file = input.files?.[0]; input.value = '';
+    if (!file) return;
+    this.section.set('practice');
+    await this.session.open(file);
   }
 }

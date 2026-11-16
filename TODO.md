@@ -1,5 +1,63 @@
 # Guitar Tab Trainer — TODO
 
+## UI shell modulare — prima di M4
+
+Richiesta autorizzata: implementare e verificare la shell usando `docs/GTT-UI.png`
+come riferimento. Nessuna attività di playback, storage musicale o audio.
+
+- [x] Separare composizione/sessione UI, header/navigazione, sidebar, viewer,
+  pannello tracce e barra di trasporto in componenti standalone.
+- [x] Rendere navigabili Practice, Library, Projects, Virtual Rig e Settings;
+  mostrare esplicitamente le sezioni future non disponibili.
+- [x] Implementare layout responsive, menu mobile e pannelli collassabili.
+- [x] Conservare caricamento, metadati, errori e renderer attraverso la navigazione.
+- [x] Implementare modalità notazione/tablatura e zoom tramite API pubbliche
+  dell'adapter; fullscreen browser dove disponibile.
+- [x] Introdurre token CSS e temi System/Light/Dark, preferenza locale e
+  inizializzazione prima del primo paint.
+- [x] Localizzare tutti i nuovi testi EN/IT; disabilitare controlli playback,
+  mute/solo/volume, recenti e preferiti non ancora implementati.
+- [x] Eseguire build, typecheck, test esistenti e test browser della shell;
+  verificare responsive e rendering di fixture GP reali.
+- [x] Aggiornare README e risultati TODO; fermarsi prima di M4.
+
+Scelte: nessuna nuova dipendenza UI o backend; navigazione di shell locale
+senza introdurre un router per sezioni ancora prive di funzionalità.
+Il core resta invariato. La sessione Angular compone core e adapter; i
+componenti di presentazione ricevono dati/comandi senza interpretare musica.
+Il viewer rimane montato per preservare il documento navigando fra sezioni.
+Partitura su carta chiara anche in dark mode per mantenere leggibilità.
+Rischi da verificare: ridimensionamento alphaTab con collasso dei pannelli,
+stabilità del renderer su cambio lingua/tema/navigazione, fullscreen non
+disponibile, storage bloccato, assenza di flash e overflow su mobile.
+
+Risultati UI shell:
+
+- Build, typecheck e verifica dei confini passati; core e dipendenze invariati.
+- 45 test automatici passati: suite precedenti più 8 casi del tema e 2 casi
+  di visibilità Staff, compresa una traccia senza corde.
+- 21 test Chromium passati: tutti i 14 scenari M3/localizzazione più 7 scenari
+  della shell. Corpus GP reale caricato/renderizzato; byte originali invariati.
+- Verificati navigazione e sezione attiva, pagine future esplicite, trasporto
+  e controlli tracce disabilitati, pannelli collassabili e renderer conservato.
+- Verificati System/Light/Dark, persistenza, cambi del sistema, storage vietato
+  e tema iniziale con bundle Angular bloccato (script applicato prima della UI).
+- Verificati le tre modalità, zoom iniziale 100% e cambio 125%, fullscreen
+  quando supportato, menu mobile e scorrimento interno della partitura.
+- Screenshot desktop dark 1440×960 e mobile 390×844 ispezionati: foglio chiaro,
+  controlli leggibili, nessun overflow orizzontale della pagina.
+- Corrette label e selezione iniziale del controllo zoom; introdotta larghezza
+  minima del foglio 720px per evitare note compresse su viewport stretti.
+- Contratto `ScoreViewMode` separato dai tipi alphaTab: nessun modello della
+  libreria esposto alla UI. Nessun uso di API deprecate di staveProfile.
+- Nessun framework UI, backend, SQLite, runtime desktop, audio o playback aggiunto.
+  Test svolti sulla porta 4173; server hot reload dell'utente non fermato.
+
+Limiti: verifica browser in Chromium Linux; fullscreen dipende dal browser.
+Navigazione locale senza routing URL, pannelli non persistiti, recenti/preferiti
+e sezioni future non operativi. I limiti M3 su corpus e prestazioni restano.
+Shell completata. Arresto prima di M4.
+
 ## Rinomina applicazione — prima del primo commit
 
 - [x] Aggiornare nome UI EN/IT, titolo HTML e nome del monorepo.

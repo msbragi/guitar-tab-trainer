@@ -1,0 +1,22 @@
+import { Component, input } from '@angular/core';
+import type { ScoreState } from '@guitar-practice/core';
+import { TranslocoPipe } from '@jsverse/transloco';
+import { Icon } from '../shared/icon.js';
+
+@Component({
+  selector: 'gp-song-info', imports: [TranslocoPipe, Icon],
+  template: `@let current = state();
+    @if (current.status === 'ready') {
+      <section class="song-info" [attr.aria-label]="'score.info' | transloco">
+        <div class="song-art" aria-hidden="true"><gp-icon name="music" /></div>
+        <div class="song-details"><p class="eyebrow">{{ current.fileName }}</p><h2>{{ current.score.title.trim() ? current.score.title : ('score.untitled' | transloco) }}</h2>
+          @if (current.score.artist) { <p class="artist">{{ current.score.artist }}</p> }
+          <p class="song-metrics">{{ (current.score.barCount === 1 ? 'score.bar' : 'score.bars') | transloco: { count: current.score.barCount } }} ·
+            {{ (current.score.tracks.length === 1 ? 'score.track' : 'score.tracks') | transloco: { count: current.score.tracks.length } }}</p></div>
+        <button class="icon-button favorite-button" type="button" disabled [attr.aria-label]="'shell.favoriteUnavailable' | transloco"><gp-icon name="star" /></button>
+      </section>
+    } @else {
+      <div class="practice-heading"><div><p class="eyebrow">{{ 'app.eyebrow' | transloco }}</p><h2>{{ 'shell.practiceTitle' | transloco }}</h2></div><span class="local-badge"><span class="status-dot"></span>{{ 'footer.local' | transloco }}</span></div>
+    }`,
+})
+export class SongInfo { readonly state = input<ScoreState>({ status: 'idle' }); }

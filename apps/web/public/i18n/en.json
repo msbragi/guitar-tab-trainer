@@ -4,7 +4,11 @@
     "eyebrow": "YOUR PRACTICE SPACE",
     "intro": "Open a Guitar Pro tablature from your computer."
   },
-  "language": { "label": "Language", "english": "English", "italian": "Italian" },
+  "language": {
+    "label": "Language",
+    "english": "English",
+    "italian": "Italian"
+  },
   "file": {
     "section": "Load tablature",
     "choose": "Choose a tablature",
@@ -38,5 +42,83 @@
     "load-failed": "Unable to load the tablature.",
     "retry": "Choose another file to try again."
   },
-  "footer": { "local": "Local reading", "poweredBy": "Powered by" }
+  "footer": {
+    "local": "Local reading",
+    "poweredBy": "Powered by"
+  },
+  "nav": {
+    "practice": "Practice",
+    "library": "Library",
+    "projects": "Projects",
+    "rig": "Virtual Rig",
+    "settings": "Settings"
+  },
+  "shell": {
+    "tagline": "Learn · Practice · Play",
+    "navigation": "Main navigation",
+    "toggleNavigation": "Toggle navigation",
+    "skipToContent": "Skip to content",
+    "libraryPanel": "Files panel",
+    "tracksPanel": "Track controls",
+    "expandLibrary": "Expand sidebar",
+    "collapseLibrary": "Collapse sidebar",
+    "expandTracks": "Expand tracks panel",
+    "collapseTracks": "Collapse tracks panel",
+    "openTab": "Open Tab",
+    "recent": "Recent Files",
+    "favorites": "Favorites",
+    "recentUnavailable": "Recent files will be available in a future update.",
+    "favoritesUnavailable": "Favorites will be available in a future update.",
+    "noTracks": "Open a tablature to see its tracks.",
+    "mixerUnavailable": "Mute, solo and track volume are not available yet.",
+    "mute": "Mute {{name}}",
+    "solo": "Solo {{name}}",
+    "trackVolume": "Track volume: {{name}}",
+    "favoriteUnavailable": "Favorites are not available yet",
+    "practiceTitle": "Your practice workspace",
+    "comingLater": "Not available yet",
+    "libraryUnavailable": "Your music library will live here. Library management is not available yet. Your open tablature is kept in Practice.",
+    "projectsUnavailable": "Study projects will live here. Project management is not available yet. Your open tablature is kept in Practice.",
+    "rigUnavailable": "Your virtual rig will live here. Rig processing is not available yet. Your open tablature is kept in Practice.",
+    "backToPractice": "Back to Practice",
+    "preferences": "Make it yours",
+    "settingsUnavailable": "More preferences will be available in a future update."
+  },
+  "theme": {
+    "label": "Appearance",
+    "system": "System",
+    "light": "Light",
+    "dark": "Dark",
+    "description": "Choose an appearance. System follows the light or dark preference of your device.",
+    "saved": "Your appearance preference is saved on this device."
+  },
+  "viewer": {
+    "mode": "Score display mode",
+    "score-tab": "Score & Tab",
+    "tab": "Tab Only",
+    "notation": "Notation Only",
+    "zoom": "Zoom",
+    "zoomValue": "{{value}}%",
+    "fullscreen": "Enter fullscreen",
+    "exitFullscreen": "Exit fullscreen",
+    "fullscreenUnavailable": "Fullscreen is not supported in this browser",
+    "fullscreenFailed": "Unable to enter or exit fullscreen.",
+    "emptyTitle": "Make room for your next riff.",
+    "formats": "Guitar Pro · GP3 / GP4 / GP5 / GPX / GP",
+    "modeHint": "Tracks without strings keep standard notation in Tab Only mode."
+  },
+  "transport": {
+    "title": "Playback",
+    "unavailable": "Playback controls are not available yet.",
+    "previous": "Go to start",
+    "play": "Play",
+    "stop": "Stop",
+    "timeline": "Playback timeline",
+    "loop": "Loop",
+    "loopA": "Set loop start A",
+    "loopB": "Set loop end B",
+    "speed": "Speed",
+    "tempo": "Tempo",
+    "volume": "Master volume"
+  }
 }

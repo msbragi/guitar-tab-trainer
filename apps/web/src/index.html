@@ -6,6 +6,21 @@
     <link rel="icon" href="data:,">
     <base href="/">
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <script>
+      // Eseguito prima di CSS e Angular: evita il flash del tema sbagliato.
+      (() => {
+        let preference = 'system';
+        try {
+          const saved = localStorage.getItem('guitar-tab-trainer.theme');
+          if (saved === 'light' || saved === 'dark') preference = saved;
+        } catch {}
+        const theme = preference === 'system'
+          ? (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')
+          : preference;
+        document.documentElement.dataset.theme = theme;
+        document.documentElement.style.colorScheme = theme;
+      })();
+    </script>
   </head>
   <body><gp-app></gp-app></body>
 </html>

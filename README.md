@@ -8,7 +8,7 @@ The goal is to provide an environment for learning guitar parts through interact
 
 The project is also an experiment in AI-assisted software development, with human supervision of architectural decisions and validation.
 
-**Current status:** M0–M3 and EN/IT multilingual UI completed. M4 has not started.
+**Current status:** M0–M3, EN/IT localization, and the responsive UI shell are implemented and verified. M4 has not started.
 
 ## Development Environment
 
@@ -55,6 +55,28 @@ The production client build is generated in:
 `apps/web/dist/web/browser`
 
 ## Features
+
+### UI Shell — Implemented
+
+The layout follows [the design reference](docs/GTT-UI.png) with standalone Angular components and shared CSS design tokens, without an additional UI framework.
+
+- Header with a guitar mark, application name/version, active section, EN/IT selector, and collapsible mobile navigation.
+- Practice, Library, Projects, Virtual Rig, and Settings navigation. Navigation is local UI state; no URL router is introduced for unfinished sections.
+- Collapsible file sidebar with Open Tab. Recent files and favorites are explicitly unavailable placeholders, with no fictitious entries or musical-library persistence.
+- Central song information and alphaTab viewer. The viewer stays mounted across section changes, retaining the loaded document and renderer.
+- Score & Tab, Tab Only, and Notation Only modes; zoom at 75%, 100%, 125%, and 150%; browser fullscreen where supported.
+- Track panel populated exclusively from the loaded score. Mute, solo, and volume controls are disabled and marked as unavailable.
+- Permanent bottom transport area. Playback, timeline, loop A/B, speed, tempo, and master volume remain disabled even after a score is loaded.
+
+Library, Projects, and Virtual Rig pages explain that their future functionality is unavailable. Settings currently implements appearance preferences. There is no simulated playback, mixer, rig, library, or project workflow.
+
+On small screens the side panels start collapsed and expand over the workspace. The notation paper retains a minimum width of 720px and scrolls inside the viewer, preserving musical readability without causing horizontal page overflow. The paper stays light in dark mode.
+
+### Appearance
+
+Choose **System**, **Light**, or **Dark** under **Settings → Appearance**. System is the default and follows `prefers-color-scheme`, including changes while the app is open. Explicit selections are saved under `guitar-tab-trainer.theme` in localStorage; blocked storage does not prevent changing appearance for the session.
+
+A small synchronous script in the document head applies the saved/system theme before CSS and Angular, preventing an incorrect initial theme. The Angular theme service maintains it afterwards. All theme colors come from shared CSS variables in `apps/web/src/styles.css`.
 
 ### Implemented — M3
 
@@ -173,6 +195,8 @@ In managed sandbox environments, browser tests may require permission to open lo
 
 The Guitar Pro test corpus is documented in [tests/fixtures/alphatab/README.md](tests/fixtures/alphatab/README.md).
 
+UI shell validation: build, typecheck, architectural boundary checks, **45 automated tests**, and **21 Chromium browser tests** passed. The browser suite includes all previous M3/localization scenarios plus navigation, disabled future controls, panel collapse, theme persistence/system changes, theme initialization before Angular, display modes, zoom, fullscreen where available, and mobile rendering. Desktop dark and mobile screenshots were inspected. Browser tests use the production build on port 4173; the user's hot-reload server on port 4200 is left running.
+
 Internationalization validation: 35 automated tests and 14 Chromium tests against the production build passed, together with build, typecheck, and a frozen-lockfile offline installation. Browser scenarios cover detection, persistence, runtime switching, English fallback, unavailable storage, translated errors, and unchanged score metadata/rendering. The additional development-server check was skipped because port 4200 was occupied by the user's active hot-reload session; that server was left running.
 
 ## Architecture
@@ -195,6 +219,10 @@ Angular application responsible for presentation, user interaction, internationa
 
 No direct alphaTab imports.
 
+The root `App` composes standalone components in `layout/` and `viewer/`. `ScoreSession` is a UI composition service around the existing core controller and adapter; it manages presentation commands without adding musical logic to presentational components. Theme and language preferences live in UI services.
+
+The adapter exposes a plain `ScoreViewMode` contract without exporting alphaTab model types. Display changes use public `Staff.showStandardNotation` / `Staff.showTablature`, `settings.display.scale`, `updateSettings()`, and `render()` on the in-memory document. Original GP files are never rewritten. Tracks without strings retain standard notation in Tab Only mode. The deprecated `display.staveProfile` setting is not used.
+
 Shared packages expose only their compiled public entry points through `dist`.
 
 The root `angular.json` configures only `apps/web`. The two TypeScript packages use `tsc` and are not Angular projects.
@@ -216,7 +244,7 @@ No backend, native Audio Engine, or desktop runtime has been introduced.
 - The verified test corpus covers GP3, GP5, and GP7; GP4 and GPX remain untested.
 - Successful SVG rendering and metadata extraction do not guarantee complete fidelity of musical effects.
 - No synthesized playback or backing track support yet.
-- No persistent study-project storage or SQLite integration; only the UI language preference is persisted.
+- No persistent study-project storage or SQLite integration; only UI language and appearance preferences are persisted.
 - No native audio device integration.
 - No desktop packaging.
 
