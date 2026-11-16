@@ -1,5 +1,36 @@
 # Guitar Tab Trainer — TODO
 
+## Consolidamento e handoff — 16 novembre 2026
+
+- [x] Verificare stato Git iniziale, staging, modifiche non pertinenti e artefatti ignorati.
+- [x] Eseguire build, typecheck, test automatici e controllo esplicito dei confini.
+- [x] Completare la verifica browser sulla build di produzione.
+- [x] Finalizzare risultati, attività rimanenti e `docs/SESSION_HANDOFF.md`.
+
+Stato consolidato: M0–M3, rinomina, localizzazione EN/IT e UI shell completate.
+M4 non iniziata; M5–M6 e le decisioni native/storage restano future.
+Baseline Git: `main`, `55ed3af` (UI disposition), working tree e indice puliti;
+nessuna modifica non pertinente rilevata. Nessun commit/push da eseguire.
+Questa attività modifica soltanto la documentazione, senza nuove funzionalità.
+
+Verifiche concluse: `pnpm build`, `pnpm typecheck`, `pnpm test`
+(45 test, 7 file) e `pnpm check:boundaries` passati. Playwright: 21 test
+Chromium passati sulla build di produzione, inclusi corpus GP e regressioni
+M3/localizzazione/shell. `git diff --check` pulito al controllo finale.
+Nessun errore bloccante rilevato; limiti di browser, corpus e rendering
+riportati in [docs/SESSION_HANDOFF.md](docs/SESSION_HANDOFF.md).
+
+Stato Git finale: soltanto README.md e TODO.md modificati e
+docs/SESSION_HANDOFF.md nuovo, senza staging. README ritoccato soltanto per
+includere le preferenze tema tra i test e collegare l'handoff. Nessuna modifica
+al codice, ai manifest o al lockfile; artefatti di build/test ignorati.
+Nessuna modifica non pertinente, commit o push. Server hot reload non fermato.
+
+Rimanenti: concordare M4 (contratti del trasporto, playback sintetizzato e
+asset audio locali), quindi M5 (verifica clock/percorso audio esterno) e M6
+(backing sincronizzata). Non sono autorizzate implementazioni di queste
+milestone durante il consolidamento. Dettagli e limiti nell'handoff.
+
 ## UI shell modulare — prima di M4
 
 Richiesta autorizzata: implementare e verificare la shell usando `docs/GTT-UI.png`

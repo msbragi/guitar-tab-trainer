@@ -156,7 +156,7 @@ pnpm typecheck
 pnpm build
 ```
 
-`pnpm test` runs architectural boundary checks and Node.js tests for the core, alphaTab adapter, UI language preferences, and translation catalogues.
+`pnpm test` runs architectural boundary checks and Node.js tests for the core, alphaTab adapter, UI language/theme preferences, and translation catalogues.
 
 `pnpm typecheck` validates production TypeScript sources.
 
@@ -251,6 +251,8 @@ No backend, native Audio Engine, or desktop runtime has been introduced.
 ## Roadmap
 
 Development milestones and their current status are tracked in [TODO.md](TODO.md).
+
+For the consolidated project state, validation results, known limitations, and the next session's M4 scope, read [docs/SESSION_HANDOFF.md](docs/SESSION_HANDOFF.md).
 
 The next major milestone is synthesized audio playback, followed by validation of synchronized playback across multiple audio sources.
 
