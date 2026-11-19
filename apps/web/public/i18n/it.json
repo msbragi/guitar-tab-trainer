@@ -1,4 +1,13 @@
 {
+  "fretboard": {
+    "effects": {"hammerOn": "Hammer-on", "pullOff": "Pull-off","title": "Effetti delle note", "position": "Corda {{string}}, tasto {{fret}}", "bend": "Bending", "tones": "toni", "vibrato": "Vibrato", "vibratoWide": "Vibrato ampio", "slide": "Slide", "legatoSlide": "Slide legato", "pickSlide": "Pick slide", "in": "in entrata", "out": "in uscita"},
+    "notes": {"0": "C", "1": "C♯", "2": "D", "3": "D♯", "4": "E", "5": "F", "6": "F♯", "7": "G", "8": "G♯", "9": "A", "10": "A♯", "11": "B"},
+    "title": "Tastiera",
+    "track": "Traccia della tastiera",
+    "capo": "Capotasto {{fret}}",
+    "string": "Corda",
+    "unavailable": "Questa traccia non ha corde con tasti."
+  },
   "app": {
     "name": "Guitar Tab Trainer",
     "eyebrow": "IL TUO SPAZIO DI STUDIO",
@@ -139,6 +148,11 @@
     }
   },
   "mixer": {
+    "resetTracks": "Ripristina tracce",
+    "visibility": "Visibilità di {{name}}",
+    "lastVisible": "Almeno una traccia deve restare visibile",
+    "hideTrack": "Nascondi {{name}}",
+    "showTrack": "Mostra {{name}}",
     "unmute": "Riattiva {{name}}",
     "unsolo": "Disattiva solo {{name}}",
     "trackControls": "Mixer: {{name}}",

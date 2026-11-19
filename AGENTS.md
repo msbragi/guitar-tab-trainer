@@ -9,7 +9,7 @@ Primary technologies:
 - TypeScript for application orchestration
 - alphaTab as an external dependency
 - Audio engine independent of the UI framework
-- Local-first storage using filesystem and SQLite
+- Local-first operation with IndexedDB for current-session recovery; project storage technology remains open for M6
 
 Development environment: Debian WSL2.
 
@@ -73,10 +73,12 @@ Do not claim functionality is verified unless it has been tested.
 
 ## Current priorities
 
-1. Establish Angular + TypeScript workspace.
-2. Integrate alphaTab through public APIs.
-3. Implement score loading and tablature rendering.
-4. Validate external audio integration and shared transport.
-5. Introduce backing track synchronization and playback controls.
+1. Maintain M4 Playback & Fretboard, functionally completed with refinements and manual verification still open.
+2. Progressively analyze M5 Guitar Capture & Play Session: segment selection, original accompaniment, real-guitar recording, replaceable Audio → MIDI conversion, and note review/correction on the fretboard. Hendrix is the first candidate to evaluate.
+3. Plan M6 Storage & Projects later, keeping the storage technology open.
 
-VST3 hosting, pitch detection and advanced rig processing are out of scope for the initial milestone.
+For UI changes, the user prefers build verification and their own browser testing.
+Use targeted tests for affected logic as appropriate. Keep the existing development
+server running and preserve the working tree. Avoid commits and pushes.
+
+VST3 hosting and advanced rig processing remain future work.

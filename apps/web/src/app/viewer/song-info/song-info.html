@@ -1,13 +1,15 @@
 @let current = state();
-    @if (current.status === 'ready') {
-      <section class="song-info" [attr.aria-label]="'score.info' | transloco">
-        <div class="song-art" aria-hidden="true"><gp-icon name="music" /></div>
-        <div class="song-details"><p class="eyebrow">{{ current.fileName }}</p><h2>{{ current.score.title.trim() ? current.score.title : ('score.untitled' | transloco) }}</h2>
-          @if (current.score.artist) { <p class="artist">{{ current.score.artist }}</p> }
-          <p class="song-metrics">{{ (current.score.barCount === 1 ? 'score.bar' : 'score.bars') | transloco: { count: current.score.barCount } }} ·
-            {{ (current.score.tracks.length === 1 ? 'score.track' : 'score.tracks') | transloco: { count: current.score.tracks.length } }}</p></div>
-        <button class="icon-button favorite-button" type="button" disabled [title]="'shell.favoriteUnavailable' | transloco" [attr.aria-label]="'shell.favoriteUnavailable' | transloco"><gp-icon name="star" /></button>
-      </section>
-    } @else {
-      <div class="practice-heading"><div><p class="eyebrow">{{ 'app.eyebrow' | transloco }}</p><h2>{{ 'shell.practiceTitle' | transloco }}</h2></div><span class="local-badge"><span class="status-dot"></span>{{ 'footer.local' | transloco }}</span></div>
-    }
+@if (current.status === 'ready') {
+  <details class="song-info">
+    <summary [title]="'score.info' | transloco">
+      <gp-icon name="music" />
+      <span>{{ current.score.title.trim() ? current.score.title : ('score.untitled' | transloco) }}</span>
+    </summary>
+    <section [attr.aria-label]="'score.info' | transloco">
+      <p>{{ current.fileName }}</p>
+      @if (current.score.artist) { <p>{{ current.score.artist }}</p> }
+      <p>{{ (current.score.barCount === 1 ? 'score.bar' : 'score.bars') | transloco: { count: current.score.barCount } }} ·
+        {{ (current.score.tracks.length === 1 ? 'score.track' : 'score.tracks') | transloco: { count: current.score.tracks.length } }}</p>
+    </section>
+  </details>
+}

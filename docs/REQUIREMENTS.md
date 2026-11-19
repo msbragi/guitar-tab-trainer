@@ -1,102 +1,61 @@
-# Guitar Tab Trainer — Requirements
+# Guitar Tab Trainer — Requisiti
 
-## 1. Obiettivo
+## Obiettivo
 
-Realizzare un'applicazione modulare per lo studio della chitarra, utilizzando alphaTab come motore musicale.
+Ambiente modulare per studiare parti di chitarra attraverso tablatura,
+playback, visualizzazione del manico e propria esecuzione sullo strumento.
+Lo sviluppo assistito da agenti IA mantiene supervisione umana sulle scelte
+architetturali e sulla validazione. [Roadmap](../TODO.md)
 
-L'applicazione è principalmente destinata alla lettura e all'esecuzione di tablature, non alla composizione musicale.
+## M0–M4 — Funzionalità disponibili
 
-Il progetto ha anche un secondo obiettivo: sperimentare lo sviluppo di un'applicazione completa attraverso agenti IA, mantenendo il controllo umano sulle decisioni architetturali e sulla verifica dei risultati.
+- Apertura di GP locali, metadati, notazione/tablatura, zoom e gestione errori.
+- Playback sintetizzato con trasporto, velocità e loop A/B.
+- Mixer, visibilità indipendente delle parti e reset tracce.
+- Posizione coerente fra playback, timeline e score anche dopo seek da fermo.
+- Recupero del GP corrente e delle impostazioni dopo refresh, senza autoplay.
+- Fretboard per la traccia selezionata, note e articolazioni rappresentate
+  con simboli, collegamenti e avanzamento.
+- UI responsive EN/IT, temi e pannelli collassabili.
 
-## 2. Requisiti funzionali
+M4 è funzionalmente completata e resta soggetta a rifiniture e verifiche manuali.
+Copertura e limiti effettivi sono in [M4_PLAYBACK.md](M4_PLAYBACK.md).
 
-### 2.1 Tablature
+## M5 — Guitar Capture & Play Session
 
-- Importazione di file Guitar Pro supportati da alphaTab.
-- Visualizzazione di tablature e, opzionalmente, notazione musicale.
-- Evidenziazione della posizione corrente durante il playback.
-- Navigazione per battuta e posizione musicale.
-- Selezione delle tracce da visualizzare e riprodurre.
+- Selezionare un intervallo di battute e creare una sessione di lavoro
+  con l'accompagnamento originale.
+- Permettere il playback da una posizione precedente al segmento scelto.
+- Registrare la chitarra reale limitando la registrazione all'intervallo.
+- Convertire l'audio acquisito in eventi musicali e tablatura.
+- Usare un motore Audio → MIDI sostituibile, valutando Hendrix come primo candidato.
+- Verificare e correggere le note attraverso la fretboard.
+- Mantenere separate frase originale e varianti.
 
-### 2.2 Playback
+Il lavoro procederà per incrementi. Target di acquisizione, allineamento
+temporale, qualità della conversione e modalità di correzione richiedono
+analisi e prove prima di stabilizzare i contratti.
 
-- Riproduzione sintetizzata delle parti musicali.
-- Play, pausa, stop e seek.
-- Controllo della velocità.
-- Selezione di intervalli e loop A/B.
-- Ripetizione di sezioni per esercitazione.
+## M6 — Storage & Projects
 
-### 2.3 Backing track
+Progettare la gestione persistente di brani, sessioni di lavoro,
+registrazioni e varianti. La tecnologia di storage resta aperta.
+Il recupero corrente IndexedDB M4 mantiene il proprio perimetro limitato.
 
-- Caricamento di file audio locali.
-- Sincronizzazione con la tablatura.
-- Playback simultaneo di backing track e parti sintetizzate.
-- Regolazione indipendente dei volumi.
-- Gestione dei punti di sincronizzazione.
+## Vincoli trasversali
 
-### 2.4 Audio esterno
+- Uso locale/offline, con requisiti dei candidati esterni da verificare.
+- Conservazione dei file GP originali e separazione delle varianti.
+- Core indipendente da UI e runtime, alphaTab attraverso API pubbliche.
+- Processing audio indipendente dai componenti UI.
+- Moduli piccoli, test mirati e nuove dipendenze motivate.
+- Sviluppo Debian WSL2. Runtime browser attuale, target Windows e packaging
+  desktop da valutare quando necessari.
 
-- Selezione del dispositivo audio.
-- Acquisizione della chitarra tramite interfaccia USB o scheda audio.
-- Supporto a canali raw e processed, quando disponibili.
-- Monitoring e mixing con la backing track.
-- Supporto ASIO su Windows, da progettare e verificare.
+## Esigenze future da rivalutare
 
-### 2.5 Progetti di studio
-
-Ogni progetto di studio rappresenta un brano o un esercizio e può contenere:
-
-- Riferimento alla tablatura originale.
-- Una o più risorse audio associate.
-- Punti di sincronizzazione.
-- Loop e sezioni salvate.
-- Configurazione audio.
-- Sessioni e progressi di studio.
-
-I file Guitar Pro originali non devono essere modificati.
-
-## 3. Persistenza
-
-L'applicazione deve funzionare offline.
-
-Storage previsto:
-
-- File system locale per risorse musicali e audio.
-- SQLite per catalogo, configurazioni e metadati.
-- Possibile esportazione e importazione dei progetti di studio.
-
-## 4. Evoluzioni future
-
-- Pitch shifting delle backing track.
-- Time stretching con conservazione dell'intonazione.
-- Rilevamento delle note suonate.
-- Confronto tra esecuzione e tablatura.
-- Virtual Rig con amplificatori ed effetti VST3.
-- Preset e catene di effetti.
-- Possibile supporto web e mobile.
-
-Queste funzionalità non appartengono al primo milestone.
-
-## 5. Requisiti non funzionali
-
-- Architettura modulare ed estensibile.
-- Indipendenza tra UI, orchestratore e Audio Engine.
-- Utilizzo di alphaTab attraverso API pubbliche.
-- Nessuna modifica ai sorgenti alphaTab salvo necessità dimostrata.
-- Funzionamento locale senza servizi cloud obbligatori.
-- Tempi di risposta e latenza adeguati allo studio musicale.
-- Test automatici per la logica applicativa.
-- Compatibilità iniziale con Windows come piattaforma di esecuzione.
-- Sviluppo in ambiente Debian WSL2.
-
-## 6. Perimetro iniziale
-
-La prima versione deve dimostrare:
-
-1. Importazione e rendering di una tablatura.
-2. Riproduzione sintetizzata.
-3. Caricamento di una backing track.
-4. Riproduzione simultanea e sincronizzata.
-5. Controllo di posizione, velocità e loop.
-
-Il successo del prototipo dipenderà soprattutto dalla qualità e stabilità della sincronizzazione audio.
+Backing audio locali separati, sync point, time stretching/pitch shifting,
+monitoring avanzato, ASIO, virtual rig e VST3 rimangono esigenze possibili.
+La loro priorità verrà stabilita rispetto ai flussi M5/M6.
+La vecchia sequenza obbligata audio esterno → backing sincronizzata è
+conservata nello [storico](HISTORY.md).

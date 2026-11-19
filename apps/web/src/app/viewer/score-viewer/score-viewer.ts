@@ -4,10 +4,11 @@ import type { ScoreViewMode } from '@guitar-practice/alphatab-adapter';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { ScoreSession } from '../../score-session.js';
 import { Icon } from '../../shared/icon/icon.js';
-import { SongInfo } from '../song-info/song-info.js';
+
+import { Fretboard } from '../fretboard/fretboard.js';
 
 @Component({
-  selector: 'gp-score-viewer', imports: [TranslocoPipe, Icon, SongInfo],
+  selector: 'gp-score-viewer', imports: [TranslocoPipe, Icon, Fretboard],
   templateUrl: './score-viewer.html',
   styleUrl: './score-viewer.css',
 })
@@ -16,6 +17,8 @@ export class ScoreViewer {
   readonly openTab = output<void>();
   readonly modes: readonly ScoreViewMode[] = ['score-tab', 'tab', 'notation'];
   readonly scales = [0.75, 1, 1.25, 1.5];
+  readonly fretboardTrack = signal<number | null>(null);
+  readonly fretboardOpen = signal(false);
   readonly fullscreenAvailable = signal(false);
   readonly fullscreen = signal(false);
   readonly fullscreenError = signal(false);

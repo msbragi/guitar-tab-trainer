@@ -13,7 +13,7 @@ export interface SavedMixer {
   readonly tracks: readonly { readonly index: number; readonly muted: boolean; readonly solo: boolean; readonly volume: number }[];
 }
 export interface CurrentSessionState {
-  readonly view: Pick<SessionPreferences, 'mode' | 'scale'>;
+  readonly view: Pick<SessionPreferences, 'mode' | 'scale'> & { readonly hiddenTracks?: readonly number[] };
   readonly transport: SavedTransport;
   readonly mixer: SavedMixer;
 }
@@ -27,6 +27,9 @@ export function parseCurrentSessionState(value: unknown): CurrentSessionState | 
   const { view, transport, mixer } = value;
   if (!object(view) || !['score-tab', 'tab', 'notation'].includes(String(view['mode']))
     || ![0.75, 1, 1.25, 1.5].includes(view['scale'] as number)) return null;
+  const hiddenTracks = view['hiddenTracks'];
+  if (hiddenTracks !== undefined && (!Array.isArray(hiddenTracks)
+    || hiddenTracks.some((index: unknown) => !number(index) || !Number.isInteger(index) || index < 0))) return null;
   if (!object(transport) || !number(transport['tick']) || transport['tick'] < 0
     || ![0.25, 0.5, 0.75, 1, 1.25, 1.5, 2].includes(transport['speed'] as number)
     || typeof transport['loop'] !== 'boolean') return null;
@@ -46,7 +49,7 @@ export function parseCurrentSessionState(value: unknown): CurrentSessionState | 
 
 export function captureCurrentSessionState(view: CurrentSessionState['view'], transport: TransportState, mixer: MixerState): CurrentSessionState {
   return {
-    view: { ...view },
+    view: { ...view, ...(view.hiddenTracks ? { hiddenTracks: [...view.hiddenTracks] } : {}) },
     transport: { tick: transport.tick, speed: transport.speed, a: transport.a, b: transport.b, loop: transport.loop },
     mixer: { masterVolume: mixer.masterVolume, tracks: mixer.tracks.map(({ index, muted, solo, volume }) => ({ index, muted, solo, volume })) },
   };

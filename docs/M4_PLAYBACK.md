@@ -1,349 +1,173 @@
-# M4 — Playback sintetizzato di riferimento
+# M4 — Playback & Fretboard
 
-Perimetro approvato il 16 novembre 2026: alphaTab 1.9.0 esterno e non
-modificato, singola sorgente sintetizzata, nessuna implementazione M5.
-Nessuna dipendenza aggiunta o aggiornata; manifest e lockfile invariati.
+**Funzionalmente completata**, con rifiniture e verifiche manuali aperte.
+La baseline usa alphaTab 1.9.0 attraverso API pubbliche e asset locali.
+Lo storico delle fasi precedenti è in [HISTORY.md](HISTORY.md).
+La roadmap successiva è in [TODO.md](../TODO.md).
 
-**Chiusura operativa del 16 novembre 2026:** l'utente ha provato l'app e
-riferito «It seems all ok», accettando M4 come baseline per l'analisi M5.
-Build/typecheck/confini e 66 test Node passati; browser 30 passati e 4 falliti.
-Il riscontro manuale non cancella questo debito. Dettagli e istruzioni per
-ripartire in [SESSION_HANDOFF.md](SESSION_HANDOFF.md) e [M5_START.md](M5_START.md).
+## Playback e trasporto
 
-## Moduli e autorità
+- Synth alphaTab forzato anche quando il GP contiene una backing incorporata.
+- Play/pausa, stop, seek e velocità 25–200%.
+- A/B impostabili dalla posizione corrente anche durante il playback.
+  Deve valere 0 ≤ A < B ≤ fine. B è esclusivo.
+- Un nuovo range valido conserva la posizione interna o la riporta ad A.
+  Un range invalido mantiene i punti precedenti e segnala l'errore.
+- Stop torna ad A con loop attivo, altrimenti all'inizio del brano.
 
-- `packages/core/src/transport.ts`: contratto `TransportPort`, eventi e
-  `TransportController`; unico stato applicativo del trasporto, immutabile.
-- `packages/alphatab-adapter`: API pubbliche di alphaTab, conversione degli
-  eventi, risorse audio e lifecycle; nessuna dipendenza Angular.
-- `apps/web`: proiezione readonly degli snapshot del core e invio dei comandi.
-  Il componente di presentazione non mantiene stato musicale autonomo.
+Il player fornisce posizione e stato effettivi. TransportController mantiene
+lo stato applicativo e convalida i comandi, senza clock musicale concorrente.
+I tick descrivono la sequenza eseguita, comprese ripetizioni e finali.
+Tempo e millisecondi provengono dal player alla velocità corrente.
+La tolleranza usata nei test di seek è di 2 tick per gli arrotondamenti del player.
 
-Il player è l'autorità temporale della singola sorgente. Il core conferma
-play/pausa/stop in base agli eventi effettivi; nessun intervallo JavaScript
-simula l'avanzamento. `idle`, `preparing`, `stopped`, `playing`, `paused` ed
-`error` distinguono preparazione audio e disponibilità del documento.
+Timeline e click sullo score passano dallo stesso controller.
+Gli aggiornamenti automatici restano notifiche. Da fermo il core filtra
+le notifiche tardive dei campioni e accetta i posizionamenti espliciti.
+Il seek porta in vista il cursore anche senza Play.
+Il click sul beat usa la sua prima occorrenza nella sequenza eseguita.
 
-I tick sono nella sequenza di esecuzione, incluse ripetizioni e finali
-alternativi. Non sono indici di battuta. Posizione/durata in millisecondi e
-BPM effettivo provengono da alphaTab alla velocità corrente; nessuna
-conversione basata sul BPM iniziale. La timeline invia seek in tick.
+## Mixer, visibilità e UI
 
-## Comandi
+Mute, solo cumulativi, volumi traccia e master usano le API del synth.
+Il mute esplicito prevale sul solo. Volume tracce 0–100%, iniziale dal GP,
+master iniziale 100%. I controlli audio delle tracce con canali MIDI condivisi
+sono collegati, anche per gruppi transitivi.
 
-- Play/pausa e stop. Stop torna all'inizio del brano o del range attivo.
-- Seek con tastiera o timeline; valori limitati al brano/range attivo.
-- Velocità: 25%, 50%, 75%, 100%, 125%, 150% e 200%.
-- A/B impostati sulla posizione corrente confermata dal player. All'apertura
-  coprono l'intero brano. Deve valere `0 <= A < B <= fine`.
-- Attivare il loop applica il range; disattivarlo conserva i punti ma rimuove
-  il range dal player. Il bordo B è esclusivo: un seek a B torna ad A.
-- Modificare A/B durante il playback mantiene l'esecuzione: conserva la
-  posizione se interna al nuovo range e la riporta ad A se esterna.
-  Un intervallo invalido conserva i punti precedenti e mostra un errore.
+L'occhio nel mixer cambia la visibilità in notazione e tablatura.
+Almeno una traccia resta visibile, dato che renderTracks ignora un elenco vuoto.
+Il reset accanto a Tracce ripristina visibilità, mute/solo e volumi del file,
+conservando master e posizione del trasporto. Un nuovo documento ripristina
+i default di velocità e mixer. Modalità e zoom si conservano fra file.
 
-Mute, solo e volumi traccia/master sono implementati nella finalizzazione UI.
-Il placeholder precedente è rimosso. Il BPM resta un indicatore readonly. Nessuna personalizzazione riscrive i file GP.
+La sidebar destra contiene titolo del brano e dettagli espandibili sopra il mixer.
+I tre toggle sono compatti, con dimensioni maggiori sui viewport mobili.
+Il viewer offre notazione/tablatura, zoom e fullscreen browser.
+I cursori e le note evidenziate hanno CSS dedicato e la carta resta chiara
+anche col tema scuro. L'interfaccia e i tooltip sono localizzati EN/IT.
 
-## Risorse e lifecycle
+## Ripristino della sessione corrente
 
-Il rendering continua sul main thread; la sintesi usa un Web Worker e,
-nel contesto sicuro verificato, AudioWorklet. Il synth è forzato tramite
-`PlayerMode.EnabledSynthesizer`, senza selezionare eventuali backing incorporate.
+IndexedDB conserva una sola copia dei byte originali dell'ultimo GP caricato
+con successo e lo snapshot associato. Dopo refresh vengono ripristinati
+file, tick, A/B, loop, velocità, master, mute/solo, volumi, vista/zoom e
+tracce nascoste. Il player viene lasciato fermo.
+Le sessioni salvate prima del campo di visibilità riaprono tutte le tracce.
+LocalStorage conserva lingua, tema e preferenze leggere.
 
-`Environment.initializeMain`, API pubblica della 1.9.0, riceve factory con URL
-espliciti: non si assume che il plugin Vite funzioni con il builder Angular.
-`angular.json` copia gli script upstream immutati sotto `assets/alphatab/`
-e SONiVOX SF2/licenza/README sotto `assets/alphatab/soundfont/`.
-Core ESM audio circa 2,5 MiB e SoundFont circa 1,3 MiB non compressi, oltre al
-bundle principale; nessuna CDN. Serve localhost o HTTPS per il percorso worklet.
-L'offline verificabile resta quello con server statico locale, senza PWA.
+La sostituzione dei record del file e dello stato è atomica.
+Le scritture del solo stato sono accorpate a 500 ms, con flush aggiuntivo
+tentato su pagehide e pagina in background. L'identificatore protegge
+il nuovo GP da scritture tardive di altre schede.
+L'apertura dello storage ha un limite di 1,5 secondi.
 
-La preparazione audio parte dopo il rendering e ha timeout di 30 secondi.
-Errori di worker, SoundFont o caricamento worklet lasciano leggibile la
-partitura e disabilitano il trasporto. Riaprire il file ricrea l'audio.
-Reset/distruzione annullano timer e listener, invalidano eventi tardivi,
-chiudono l'output con API pubbliche e terminano i worker creati dall'adapter,
-anche se non possono inviare un ack. Nessun accesso a campi privati upstream.
+Storage negato, quota e dati corrotti consentono comunque l'apertura manuale.
+Una sostituzione fallita conserva l'ultima copia valida, che può riapparire
+al refresh. Uno snapshot invalido viene ignorato. Un GP corrotto mostra
+il normale errore di caricamento e può essere sostituito manualmente.
+Una chiusura improvvisa può perdere gli ultimi aggiornamenti.
 
-Da fermo il core ignora eventi di posizione non derivanti da seek: notifiche
-di campioni già in volo possono arrivare dopo pausa/stop. I seek espliciti
-restano accettati. I test browser ammettono il piccolo arrotondamento della
-conversione temporale del player; questa milestone non certifica precisione
-sample-accurate né continuità acustica ai confini del loop.
+I dati dipendono da origine/porta, browser e profilo e sono cancellabili.
+Fra schede prevale l'ultimo caricamento riuscito, senza aggiornamento live
+delle altre. Progetti, cronologia e sessioni di lavoro persistenti appartengono
+alla futura M6, con tecnologia ancora aperta.
 
-## Verifiche automatiche
+## Fretboard sincronizzata e articolazioni
 
-Risultati della finalizzazione Track Mixer/UI: build, typecheck e confini
-passati; **66 test Node in 12 file passati**; browser **30 passati e 4 falliti
-su 34**. Gli scenari aperti sono elencati nell'handoff: fixture canali
-condivisi, segnale dopo unmute e due helper responsive con pannello nascosto.
-Non sono stati corretti o rieseguiti dopo la richiesta dell'utente di fermare
-le verifiche automatiche. L'utente ha poi riferito esito manuale positivo.
+Il pannello Tastiera è opzionale e collassabile. Un selettore locale sceglie
+la traccia da rappresentare. La proiezione usa il primo rigo a corde della
+traccia e i tick confermati, anche in pausa e dopo seek/click da fermo.
+Le tracce senza corde mostrano un messaggio dedicato.
 
-Prima della finalizzazione, 57 test Node, 27 browser e sei scenari dev sulla
-4174 erano passati. Questi risultati sono storici. I comandi seguenti sono
-riferimenti, non istruzioni per rilanciare automaticamente tutte le suite.
+Il manico mostra accordatura, capotasto, corde a vuoto, tasti e note attive.
+Le note usano sigle anglosassoni con diesis, come apici accanto al marker.
+I riferimenti bianchi indicano i tasti del manico, con secondo punto a 12 e 24.
+La selezione della traccia e l'apertura del pannello valgono per la pagina corrente.
 
-```sh
-pnpm build
-pnpm typecheck
-pnpm test
-pnpm check:boundaries
-PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH=/usr/bin/chromium pnpm exec playwright test --reporter=line
-```
+| Articolazione | Rappresentazione |
+|---|---|
+| Bending e release | Curva laterale completa e punto che segue salita, tenuta e ritorno. Il marker resta sul tasto premuto. |
+| Slide shift/legato con destinazione | Percorso sul manico, tasto di arrivo attenuato e punto in avanzamento. |
+| Hammer-on e pull-off | Arco H/P fra i tasti, mantenuto anche sulla nota di arrivo. Una catena può mostrare collegamento entrante e uscente. |
+| Vibrato, pick slide e slide senza destinazione | Simboli e dettagli testuali. |
 
-I test Node coprono gating dei comandi, eventi/stati, validazione, A/B durante
-il playback, seek, velocità, errori, reset/dispose, notifiche tardive e factory
-browser. Il typecheck verifica i sorgenti di produzione; Vitest trasforma i test.
+La geometria e il percorso completo sono disponibili da fermo.
+L'avanzamento deriva da tick, durata del beat e offset della curva.
+La temporizzazione è didattica. Durate speciali di note legate, staccato,
+palm mute, grace note e bending rapidi SongBook possono differire dall'audio.
+L'ampiezza grafica del bending è adattata allo spazio, con intervallo in toni
+nei dettagli. Le note nominate indicano la posizione base.
 
-La suite browser copre:
+Whammy bar, animazione del vibrato e legature generiche di fraseggio restano
+fuori dalla copertura animata attuale. H/P richiede una destinazione valida
+sulla stessa corda. Mute/solo non filtrano i marker della traccia selezionata.
+La correzione delle note attraverso il manico è un obiettivo M5.
 
-- grafo Web Audio con campioni non nulli dopo click, pausa/ripresa e stop;
-- asset locali, worker e chiusura del precedente AudioContext/worker al cambio file;
-- modifiche A/B mentre il player esegue, wrap del loop, range invalido e stop;
-- nove quarti eseguiti nella fixture con cinque battute da 1/4 e ripetizioni;
-- cambi di tempo 120 → 60 BPM, velocità, fine brano, zoom/modalità durante playback;
-- errori e recupero per SoundFont e worker mancanti;
-- errore e recupero del worklet tramite rifiuto iniettato di `addModule`:
-  Chromium non intercetta questo caricamento con `page.route`;
-- regressioni di caricamento, corpus originale, EN/IT, temi, shell e mobile.
+## Risorse, offline e lifecycle
 
-La fixture tempo è originale del progetto, con generatore e provenienza in
-[tests/fixtures/M4.md](../tests/fixtures/M4.md). Nessun fixture upstream modificato.
+Rendering sul main thread, sintesi in worker e AudioWorklet su localhost/HTTPS.
+Bravura, SONiVOX SF2, licenze e script upstream sono distribuiti localmente
+sotto assets/alphatab. L'uso offline è stato verificato con server locale.
 
-## Ascolto manuale richiesto
+La preparazione audio segue il rendering e ha timeout di 30 secondi.
+Errori audio conservano la partitura e disabilitano il trasporto.
+Riaprire il file ricrea l'audio. Reset e distruzione scollegano eventi e
+timer, chiudono l'output e terminano i worker, anche senza ack.
+Il sito attuale richiede un server e non dispone di avvio offline PWA.
 
-I campioni misurati nel grafo audio non certificano l’uscita fisica o la qualità
-musicale. L’utente ha dato riscontro manuale generale positivo; l’agente non
-ha eseguito ascolto umano e non sono stati riportati dispositivo, browser o
-esiti punto per punto. La seguente checklist resta un riferimento per
-eventuali verifiche specialistiche, senza bloccare l’analisi M5:
+## Verifiche registrate
 
-1. Su localhost/HTTPS, aprire un GP, attendere la disponibilità e premere Play:
-   verificare suono udibile sul dispositivo scelto e strumenti plausibili.
-2. Verificare pausa/ripresa, stop e seek ascoltando eventuali note residue,
-   salti, click o interruzioni inattese.
-3. Attivare A/B e modificare entrambi i punti durante l'esecuzione, anche
-   rendendo esterna la posizione attuale: ascoltare il rientro nel nuovo range.
-4. Provare velocità 50%, 100% e 200%, la fixture tempo e quella con ripetizioni;
-   verificare ritmo, resa degli effetti e corrispondenza percepita col cursore.
-5. Cambiare file durante il playback e chiudere la pagina: verificare che non
-   resti audio della sessione precedente.
+| Fase | Esito effettivamente registrato |
+|---|---|
+| Consolidamento del recupero IndexedDB | Build/typecheck/confini, 36 test Node selettivi e 5 scenari Chromium passati. |
+| Prima fretboard | Build/typecheck/confini, 78 test Node complessivi e 3 scenari Chromium mirati passati. |
+| Recupero visibilità | Build e 8 test Node passati. L'utente ha confermato il corretto rendering dopo refresh. |
+| Prototipo slide e bending | Build/confini e 13 test Node mirati passati. |
+| Aggiunta H/P | Build/confini e 16 test Node mirati passati. Proiettate correttamente 49 origini H/P del GP5 dell'utente. |
 
-Browser/dispositivi Windows, altri browser, qualità timbrica, latenze, stress
-prolungato e partiture grandi restano non certificati. Backing simultanea,
-clock condiviso, PCM/MIDI/prerendering, audio nativo e storage restano M5+.
+L'utente ha confermato la resa compatta, il funzionamento dei gesti del GP
+dimostrativo e degli archi H/P nel proprio GP5. Ne ha apprezzato la resa visiva,
+con valore didattico ancora da valutare nell'uso.
+Le prove non certificano uscita fisica, fedeltà musicale completa,
+latenza nativa, altri browser/dispositivi o comportamento sotto carico.
 
-## Finalizzazione M4 — Track Mixer e UI
+Per modifiche UI successive, l'utente preferisce build e prova personale
+nel browser. I risultati selettivi non forniscono un esito della suite
+browser completa sul codice corrente.
 
-Implementazione autorizzata dalla richiesta di finalizzazione. Stato immutabile
-in `packages/core/src/mixer.ts` (`MixerController`, `MixerPort`); l'adapter
-converte gli indici applicativi in riferimenti alle tracce alphaTab e usa
-esclusivamente `changeTrackMute`, `changeTrackSolo`, `changeTrackVolume` e
-`masterVolume`. Nessun DSP o mixer audio personalizzato e nessun fork.
+## Problemi noti e debiti aperti
 
-Il solo è cumulativo: più tracce possono restare in solo. Il mute esplicito
-prevale sul solo; una traccia può avere entrambi i flag senza essere udibile.
-Togliere l'ultimo solo rende nuovamente disponibili le altre tracce non mute.
-Lo stato `excluded` è derivato nel core, non nei componenti Angular.
+- Nell'ultimo run browser completo storico dopo il mixer, 30 scenari passavano
+  e 4 fallivano. La suite completa attuale non è stata rieseguita.
+- La fixture m4-mixer-linked.gp rientra con canali distinti, quindi non esercita
+  la condivisione dichiarata dal generatore.
+- Il test audio non ripristinava il segnale atteso dopo unmute.
+  Causa ancora aperta. Sono state rilevate note/voci duplicate, programma
+  diverso e collisioni di ID nei dati mixer. La verifica del tick cache ha
+  confermato un limite di quelle fixture. Dettagli in [M4_MIXER.md](../tests/fixtures/M4_MIXER.md).
+- Due helper responsive cercavano pulsanti in un pannello collassato a 1024
+  e 390 px, fallendo prima delle misure di layout.
+- Il successivo test tracks-sidebar.e2e.ts ha fallito un'asserzione sui vecchi
+  SVG presenti dopo refresh, anche filtrandoli con :visible. L'utente ha poi
+  confermato che il rendering funziona. Il criterio del test resta da chiarire.
+- Prestazioni su partiture grandi, GP4/GPX, browser diversi da Chromium Linux
+  e Windows/ASIO richiedono verifica. Rendering corretto nel piccolo corpus
+  non garantisce la fedeltà di ogni file o articolazione.
+- Continuità acustica ai confini dei loop, code di note e qualità timbrica
+  richiedono ascolto manuale specialistico. La sincronizzazione di acquisizione
+  e playback sarà valutata nella M5.
 
-I volumi 0–100% sono fattori 0–1. Il volume iniziale di traccia deriva da
-`PlaybackInformation.volume / 16`. Un nuovo file azzera mute/solo e ripristina
-master 100% e volumi iniziali; modalità, zoom, tema, lingua e navigazione non
-azzerano il mixer. Un evento ready ripetuto riapplica lo stato corrente;
-reset e indisponibilità audio disabilitano i controlli. Errori con codici
-neutrali sono tradotti in UI.
+## Risorse di prova
 
-Le API operano sui canali MIDI, come dichiarato dalla documentazione di
-[changeTrackMute](https://alphatab.net/docs/reference/api/changetrackmute/)
-e [changeTrackSolo](https://alphatab.net/docs/reference/api/changetracksolo/).
-Quando due tracce condividono un canale, i loro controlli vengono collegati,
-anche per gruppi con sovrapposizioni transitive. Il volume iniziale comune è
-quello della prima traccia del gruppo. La UI segnala il collegamento;
-nessuna promessa di isolamento impossibile con il synth integrato.
-Il core conosce soltanto gli indici collegati, senza tipi alphaTab o canali.
-Il modello musicale e i file GP non vengono riscritti.
+| File | Scopo |
+|---|---|
+| [M4.md](../tests/fixtures/M4.md) | Fixture tempo originale, metrica e provenienza. |
+| [M4_MIXER.md](../tests/fixtures/M4_MIXER.md) | Intenzione e limiti delle fixture mixer. |
+| [m4-fretboard.gp](../tests/fixtures/m4-fretboard.gp) | Chitarra e basso con accordature e posizioni distinte. |
+| [m4-gestures.gp](../tests/fixtures/m4-gestures.gp) | Sette battute a 60 BPM con slide, bending/release, pausa, H/P. |
 
-Tooltip nativi via `title`, tutti ottenuti da Transloco: navigazione, file,
-pannelli, vista/zoom/fullscreen, lingua, tema, trasporto e mixer. I toggle
-mostrano l'azione inversa quando attivi (Unmute/Unsolo). Le label accessibili,
-`aria-pressed`, i testi e i controlli nativi restano indipendenti dal tooltip.
-I test verificano titoli e aggiornamento dinamico; l'aspetto del popup è del
-browser e va controllato manualmente, soprattutto sui dispositivi touch.
-
-La barra elimina le righe di istruzioni sempre visibili, mantiene una guida
-A/B accessibile e i valori correnti, e usa una riga su desktop. A viewport
-strette va a capo; i pulsanti mobili hanno aree 44×44 px. Gli slider hanno
-un'altezza di interazione maggiore. Nessuna modifica al clock, alla viewport
-del renderer o al comportamento di seek/loop.
-
-Le fixture sperimentali a tre voci erano pensate per canali distinti e
-condivisi, ma hanno problemi di roundtrip ancora aperti; stato, provenienza
-e generatore sono in [M4_MIXER.md](../tests/fixtures/M4_MIXER.md).
-Il test del grafo audio mira a verificare mute, solo multipli, volume traccia
-e master. Nell’ultima esecuzione ha rilevato segnale iniziale e silenzio con
-tutti i mute, ma è fallito al successivo unmute della prima traccia: i passi
-successivi non sono quindi verificati da quel test. La fixture ha problemi
-di roundtrip ancora aperti. Non dichiarare questa prova passata né usarla
-come certificazione di qualità timbrica o uscita fisica.
-
-Checklist specialistica aggiuntiva (il riscontro manuale generale è già positivo):
-
-- [ ] Ascoltare due o più tracce distinte: mute multipli, solo multipli,
-  mute su una traccia in solo e ripristino dopo l'ultimo unsolo.
-- [ ] Regolare separatamente i volumi e il master, anche durante un loop;
-  verificare eventuali note residue o discontinuità.
-- [ ] Verificare un proprio GP con tracce che condividono canali e i controlli
-  collegati, poi caricare un altro GP e controllare il ripristino.
-- [ ] Provare tooltip EN/IT, tastiera e slider su browser/dispositivi reali;
-  verificare leggibilità e comodità della barra su schermi piccoli.
-
-M5 non avviata. Nessuna nuova dipendenza, routing, backing o Audio Engine.
-
-## Consolidamento — 19 novembre 2026
-
-Analisi: `enableUserInteraction = false` disabilitava il seek sullo score.
-Nella versione **1.9.0 installata**, `beatMouseDown`, `tickCache.getBeatStart`,
-`enableSeekToClick`, `enablePlaybackRangeSelection`,
-`resetPlaybackRangeOnClick` e `scrollToCursor` sono API pubbliche disponibili.
-Riferimenti: [eventi beat](https://alphatab.net/docs/reference/api/beatmousedown/),
-[interazione](https://alphatab.net/docs/features/interact/enabling-and-disabling-interaction/),
-[scorrimento](https://alphatab.net/docs/reference/api/scrolltocursor/).
-La verifica sui tipi e sul codice distribuito della 1.9 evita di assumere
-che tutte le funzionalità del sito corrente appartengano a questa release.
-Nessun file della libreria è stato modificato.
-
-Il player aggiorna il cursore anche sui seek da fermo, ma non richiede lo
-scorrimento automatico alla nuova battuta fino al playback. L'adapter ora
-richiede `scrollToCursor` dopo l'aggiornamento visivo di un seek confermato.
-La timeline usa `input` per inviare il seek durante il trascinamento.
-Le richieste di frame sono accorpate e cancellate al reset; non rappresentano
-un clock musicale e non inviano comandi di trasporto.
-
-Il click su un beat/nota genera `seek-request` in tick nel port del core.
-Il controller applica le stesse regole di validazione e A/B della timeline;
-le notifiche `position` non diventano comandi. L'interazione nativa di seek
-e selezione range rimane disabilitata per evitare un secondo percorso di
-comando che aggiri il controller. Il click usa la **prima occorrenza** del beat
-nella sequenza eseguita (`getBeatStart`); non seleziona una ripetizione successiva.
-Il bordo B resta esclusivo; clic fuori range mantiene i limiti del core.
-Non si avvia audio cliccando da fermo.
-
-Preferenze web leggere in localStorage con schema validato: vista, zoom,
-velocità e master. Lingua e tema mantengono i loro meccanismi esistenti.
-Velocità e master sono ripristinati sul primo documento dopo refresh, alla
-disponibilità dei rispettivi controller; un successivo nuovo file mantiene
-il reset M4. Vista e zoom si conservano tra file. Storage assente, corrotto
-o bloccato non impedisce caricamento e playback. Non si scrive nello storage
-a ogni aggiornamento di posizione: vengono salvate soltanto preferenze cambiate.
-
-### Ultima tablatura in IndexedDB — decisione approvata
-
-L'utente ha approvato il recupero automatico del solo file corrente e del
-relativo stato M4, senza autoplay. La gestione di progetti, cronologia e
-sessioni salvate sarà decisa separatamente con lo storage più appropriato.
-Questo intervento non sceglie né anticipa filesystem/SQLite per tali funzioni.
-
-- `apps/web/src/app/current-session-store.ts`: IndexedDB nativo, database
-  `guitar-practice.current-session` versione 1, object store `current`.
-  Contiene soltanto `file` (identificatore, nome, byte originali Uint8Array)
-  e `state` (stesso identificatore e snapshot). La sostituzione dei due record
-  è atomica e avviene dopo il caricamento riuscito, anche in un recupero.
-- `current-session-state.ts`: validazione dello snapshot e applicazione dei
-  comandi pubblici di `TransportController` e `MixerController`. Nessun
-  modello alphaTab serializzato, tipo della libreria nel core o stato
-  `playing` persistito. Millisecondi, durata e tempo sono ricalcolati dal player.
-- `ScoreSession`: composizione e lifecycle web; mantiene separati recupero,
-  caricamento e disponibilità audio. Trasporto e mixer vengono applicati
-  una sola volta quando i rispettivi controller sono pronti. Il recupero
-  asincrono ancora in lettura non prevale su un'apertura esplicita o un detach.
-
-Dopo refresh vengono ripristinati GP, posizione in tick, A/B e attivazione
-loop, velocità, modalità/zoom, master, mute/solo e volumi delle tracce.
-Non viene chiamato Play. Il seek rispetta i limiti del core e il bordo B
-esclusivo; range oltre la durata effettiva ignorati, indici traccia sconosciuti
-ignorati e controlli collegati mantenuti coerenti.
-
-I byte originali non vengono riscritti sul disco né salvati a ogni tick.
-Durante il playback si accorpano le scritture del solo stato con un timeout
-I/O di 500 ms; `pagehide` e passaggio della pagina in background tentano un
-flush aggiuntivo. Nessun clock musicale nuovo. Una chiusura improvvisa o il
-browser che sospende l'I/O può perdere gli ultimi aggiornamenti; non è una
-persistenza sample-accurate. Un documento successivo mantiene i reset M4 di
-velocità e mixer e sostituisce la sola copia corrente, senza cronologia.
-
-Errori, quota o IndexedDB non disponibile non impediscono di caricare e
-usare il documento; l'apertura dello storage ha un limite di 1,5 secondi.
-Una sostituzione fallita conserva la precedente copia valida, che potrà
-quindi riapparire al refresh. Snapshot corrotti o non associati al file
-vengono ignorati; il GP valido si riapre con le preferenze leggere/default.
-Un GP non leggibile nello storage mostra il normale errore di caricamento:
-è possibile riselezionare un file. Nessuna richiesta di permessi filesystem.
-
-I dati sono specifici di browser/profilo/origine (anche porta) e cancellabili
-dal browser; non sono una libreria musicale o un backup. Fra più schede
-prevale l'ultimo caricamento riuscito; le altre non si aggiornano dal vivo.
-L'identificatore impedisce che le loro scritture tardive modifichino lo stato
-del nuovo GP. Nessuna nuova dipendenza o promessa di accesso permanente al
-disco. Lo storage non rende l'app una PWA né garantisce l'avvio offline.
-
-### Verifiche prima dell’approvazione IndexedDB (storiche)
-
-- Build, typecheck e controllo dei confini passati.
-- **29 test Node selettivi, 5 file**, passati: trasporto core, mixer core,
-  trasporto adapter, lifecycle adapter e validazione/fallback preferenze.
-- **2 scenari Chromium, 24,3 s**, passati sulla build di produzione con
-  server isolato 4173: seek tramite `input` da fermo e cursore in viewport;
-  click su beat/nota, clamp A/B, pausa, seek da pausa, stop al punto A;
-  cambio modalità/zoom senza perdita della posizione; preferenze dopo
-  refresh e riselezione manuale del GP, player fermo; reset di velocità e
-  master al documento successivo, anche nelle preferenze persistite.
-- Il primo tentativo completo aveva 1 passato e 1 fallito: il click del test
-  sul primo gruppo SVG era intercettato da una dinamica. Selezionato un beat
-  precedente ad A senza sovrapposizione; entrambi gli scenari poi passati.
-  Un'ulteriore esecuzione è stata interrotta dal riavvio dell'ambiente e non
-  è conteggiata come esito.
-
-Non rieseguita la suite browser completa: restano aperti i quattro debiti
-storici di mixer/fixture/responsive riportati sopra. Nessun ascolto umano
-eseguito in questo intervento. Verificare manualmente trascinamento continuo,
-click sul proprio GP, ripetizioni, A/B, cambio velocità e mixer durante il
-suono; touch e altri browser non certificati. In questa prima fase il test di refresh prevedeva ancora la riselezione
-manuale del GP; è stato poi esteso al recupero IndexedDB descritto sopra.
-Nessun clock, motore, backend, dipendenza, modifica M5 o commit/push aggiunto;
-il server di sviluppo dell'utente non è stato interrotto.
-
-
-### Verifiche finali dopo l’approvazione IndexedDB
-
-- Build, typecheck, controllo dei confini e `git diff --check` passati.
-- **36 test Node selettivi in 7 file passati**: suite trasporto/mixer/lifecycle
-  precedenti più validazione e ripristino snapshot, bordo B esclusivo,
-  range oltre la durata, mixer con tracce collegate, storage negato/assente,
-  apertura bloccata/timeout e chiusura durante apertura.
-- **5 scenari Chromium passati in 32,6 s**, su build di produzione e server
-  isolato 4173: sincronizzazione già descritta; riapertura automatica senza
-  riselezione del GP; ripristino esatto di A/B, velocità, vista/zoom e mixer;
-  posizione confermata con la tolleranza M4 di **2 tick**; refresh durante
-  playback con riavvio fermo; byte salvati identici ai fixture originali;
-  reset al documento successivo; apertura manuale con IndexedDB negato;
-  sostituzione atomica e protezione contro scritture di schede vecchie;
-  snapshot associato ma corrotto ignorato; quota simulata durante il secondo
-  `put` con rollback della transazione; GP invalido che conserva l'ultima
-  copia valida e successivo recupero al refresh.
-
-I primi tentativi IndexedDB avevano asserzioni esatte sui tick (il player
-restituiva +1 tick) e un seek nel test a due schede prima della disponibilità
-audio. Corrette le aspettative con la tolleranza M4 già esistente e aggiunta
-l'attesa del trasporto pronto; l'ultima esecuzione dei cinque scenari è verde.
-Nessuna modifica alla libreria necessaria. Questi risultati sostituiscono
-quelli della prima fase di consolidamento, senza cancellare i quattro debiti
-browser storici (fixture/mixer e responsive) non rieseguiti in questo lavoro.
-
-Validazione manuale ancora richiesta: usare il proprio GP, regolare A/B,
-velocità e mixer, provare Ctrl+R sia da fermo sia durante il suono e verificare
-posizione/cursore e assenza di audio fino a Play. L'ascolto fisico e la qualità
-musicale, touch, altri browser e stress su partiture grandi non sono stati
-certificati da queste prove. Nessun commit/push, modifica M5 o arresto del
-server di sviluppo dell'utente; nessuna dipendenza o clock musicale aggiunto.
+I generatori delle ultime due fixture sono in packages/alphatab-adapter/test,
+rispettivamente generate-m4-fretboard.mjs e generate-m4-gestures.mjs.
+Il GP5 scaricato dall'utente è stato letto senza modificarlo o copiarlo
+nel corpus distribuito. Il corpus upstream e le licenze sono in
+[tests/fixtures/alphatab/README.md](../tests/fixtures/alphatab/README.md).

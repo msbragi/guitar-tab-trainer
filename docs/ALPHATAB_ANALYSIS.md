@@ -1,6 +1,13 @@
-# alphaTab: valutazione architetturale per un'app desktop di studio
+# Storico tecnico alphaTab: valutazione architetturale per un'app desktop di studio
 
-Analisi statica del checkout `5f50046a0e76229af5509f5a28e9567d5af634f0`; versione dichiarata in [package.json](packages/alphatab/package.json): **1.10.0**. Questa versione identifica i sorgenti esaminati, non un pacchetto installato o una release verificata. Nessun prototipo, installazione, build o test eseguito. I riferimenti descrivono contratti e implementazioni presenti, non difetti riprodotti.
+Documento storico di analisi statica. La roadmap attiva è in
+[TODO.md](../TODO.md) e l'architettura corrente in
+[ARCHITECTURE.md](ARCHITECTURE.md). I percorsi packages/alphatab citati
+qui identificano file del checkout upstream esaminato, assente nel workspace
+GTT. La dipendenza installata è alphaTab 1.9.0.
+
+
+Analisi statica del checkout `5f50046a0e76229af5509f5a28e9567d5af634f0`; versione dichiarata in `packages/alphatab/package.json`: **1.10.0**. Questa versione identifica i sorgenti esaminati, non un pacchetto installato o una release verificata. Nessun prototipo, installazione, build o test eseguito. I riferimenti descrivono contratti e implementazioni presenti, non difetti riprodotti.
 
 ## Valutazione
 
@@ -14,15 +21,15 @@ I percorsi di questa sezione sono relativi a `packages/alphatab/src/`.
 
 | Componente | Evidenza | Implicazione |
 | --- | --- | --- |
-| Facciata integrata | [AlphaTabApiBase.ts](packages/alphatab/src/AlphaTabApiBase.ts), [AlphaTabApi.ts](packages/alphatab/src/platform/javascript/AlphaTabApi.ts) | Collega caricamento, rendering, player, cursori, selezione ed eventi. La variante JavaScript richiede un `HTMLElement`; la UI applicativa può essere autonoma. |
-| Importazione | [ScoreLoader.ts](packages/alphatab/src/importer/ScoreLoader.ts), `Environment.buildImporters()` | Produce un `Score` senza rendering o playback. Gli importatori registrati includono `Gp3To5Importer`, `GpxImporter`, `Gp7To8Importer`. |
-| Modello | [Score.ts](packages/alphatab/src/model/Score.ts), `Track`, `Staff`, `Bar`, `Voice`, `Beat`, `Note`, `MasterBar` | Oggetti musicali condivisi dalle pipeline; non è una separazione in servizi isolati. Relazioni e dati derivati richiedono coerenza. |
-| Layout/rendering | [ScoreRenderer.ts](packages/alphatab/src/rendering/ScoreRenderer.ts), [IScoreRenderer.ts](packages/alphatab/src/rendering/IScoreRenderer.ts) | Indipendente dal synth; layout e disegno restano responsabilità di alphaTab. |
-| Generazione musicale | [MidiFileGenerator.ts](packages/alphatab/src/midi/MidiFileGenerator.ts), `IMidiFileHandler`, `AlphaSynthMidiFileHandler` | Traduce il modello in eventi di esecuzione, lookup temporale e sync point. Utilizzabile senza UI. |
-| Sintesi/output | [AlphaSynth.ts](packages/alphatab/src/synth/AlphaSynth.ts), [IAlphaSynth.ts](packages/alphatab/src/synth/IAlphaSynth.ts), [ISynthOutput.ts](packages/alphatab/src/synth/ISynthOutput.ts) | Sintesi SoundFont separata dal dispositivo che consuma i campioni. |
-| Adattamento piattaforma | [IUiFacade.ts](packages/alphatab/src/platform/IUiFacade.ts), `ICanvas`, `IContainer` | Contratti pubblici per integrazioni personalizzate, con superficie più ampia rispetto al semplice hosting del controllo. |
+| Facciata integrata | `packages/alphatab/src/AlphaTabApiBase.ts`, `packages/alphatab/src/platform/javascript/AlphaTabApi.ts` | Collega caricamento, rendering, player, cursori, selezione ed eventi. La variante JavaScript richiede un `HTMLElement`; la UI applicativa può essere autonoma. |
+| Importazione | `packages/alphatab/src/importer/ScoreLoader.ts`, `Environment.buildImporters()` | Produce un `Score` senza rendering o playback. Gli importatori registrati includono `Gp3To5Importer`, `GpxImporter`, `Gp7To8Importer`. |
+| Modello | `packages/alphatab/src/model/Score.ts`, `Track`, `Staff`, `Bar`, `Voice`, `Beat`, `Note`, `MasterBar` | Oggetti musicali condivisi dalle pipeline; non è una separazione in servizi isolati. Relazioni e dati derivati richiedono coerenza. |
+| Layout/rendering | `packages/alphatab/src/rendering/ScoreRenderer.ts`, `packages/alphatab/src/rendering/IScoreRenderer.ts` | Indipendente dal synth; layout e disegno restano responsabilità di alphaTab. |
+| Generazione musicale | `packages/alphatab/src/midi/MidiFileGenerator.ts`, `IMidiFileHandler`, `AlphaSynthMidiFileHandler` | Traduce il modello in eventi di esecuzione, lookup temporale e sync point. Utilizzabile senza UI. |
+| Sintesi/output | `packages/alphatab/src/synth/AlphaSynth.ts`, `packages/alphatab/src/synth/IAlphaSynth.ts`, `packages/alphatab/src/synth/ISynthOutput.ts` | Sintesi SoundFont separata dal dispositivo che consuma i campioni. |
+| Adattamento piattaforma | `packages/alphatab/src/platform/IUiFacade.ts`, `ICanvas`, `IContainer` | Contratti pubblici per integrazioni personalizzate, con superficie più ampia rispetto al semplice hosting del controllo. |
 
-[alphaTab.core.ts](packages/alphatab/src/alphaTab.core.ts) espone i namespace `importer`, `model`, `rendering`, `midi`, `synth`, `platform`, `io`, `exporter`, `json`. Il manifest permette l'entry point principale e `./core`, non import arbitrari di file interni. Essere esportata da un barrel non rende automaticamente stabile una classe marcata `@internal`: ad esempio `AlphaSynthWebWorkerApi` e `AlphaSynthWebAudioOutputBase` non sono basi prudenti per un'integrazione aggiornabile.
+`packages/alphatab/src/alphaTab.core.ts` espone i namespace `importer`, `model`, `rendering`, `midi`, `synth`, `platform`, `io`, `exporter`, `json`. Il manifest permette l'entry point principale e `./core`, non import arbitrari di file interni. Essere esportata da un barrel non rende automaticamente stabile una classe marcata `@internal`: ad esempio `AlphaSynthWebWorkerApi` e `AlphaSynthWebAudioOutputBase` non sono basi prudenti per un'integrazione aggiornabile.
 
 ## Utilizzo indipendente
 
@@ -35,19 +42,19 @@ I percorsi di questa sezione sono relativi a `packages/alphatab/src/`.
 
 `Score.masterBars` contiene la struttura comune: metrica, ripetizioni, finali, direzioni, `tempoAutomations` e `syncPoints`; le tracce contengono le rispettive battute e note. **Posizione nella notazione, tick nell'esecuzione e millisecondi del media sono coordinate diverse.** Una battuta può essere eseguita più volte e il tempo può cambiare: indice di battuta o BPM iniziale non bastano a ricavare la timeline.
 
-`MidiFileGenerator.tickLookup` e `AlphaTabApiBase.tickCache` espongono [MidiTickLookup](packages/alphatab/src/midi/MidiTickLookup.ts), con `findBeat()`, `masterBars`, `getBeatStart()` e `getMasterBarStart()`. Le ricerche riferite a un solo `Beat` non sostituiscono l'identificazione dell'occorrenza nella sequenza ripetuta. `AlphaSynthMidiFileHandler.tickShift` rappresenta inoltre l'offset necessario per abbellimenti iniziali: la facciata integrata lo compensa, una pipeline separata deve considerarlo.
+`MidiFileGenerator.tickLookup` e `AlphaTabApiBase.tickCache` espongono `packages/alphatab/src/midi/MidiTickLookup.ts`, con `findBeat()`, `masterBars`, `getBeatStart()` e `getMasterBarStart()`. Le ricerche riferite a un solo `Beat` non sostituiscono l'identificazione dell'occorrenza nella sequenza ripetuta. `AlphaSynthMidiFileHandler.tickShift` rappresenta inoltre l'offset necessario per abbellimenti iniziali: la facciata integrata lo compensa, una pipeline separata deve considerarlo.
 
 Le API integrate includono `play()`, `pause()`, `stop()`, `tickPosition`, `timePosition`, `playbackSpeed`, `playbackRange`, `isLooping`. Loop e replay di una selezione sono disponibili; politiche di studio come ripetizioni contate, pause e incremento progressivo del tempo appartengono all'orchestratore. `playbackSpeed` è un fattore di velocità, non un editor della mappa dei tempi. `loadMidiForScore()` rigenera il MIDI e interrompe il playback.
 
-Gli eventi `playerPositionChanged`, `playerStateChanged`, `playerFinished`, `playedBeatChanged`, `activeBeatsChanged`, `midiEventsPlayed` consentono feedback UI e logica applicativa. [PositionChangedEventArgs](packages/alphatab/src/synth/PositionChangedEventArgs.ts) include tick, millisecondi, estremi, `isSeek`, `originalTempo`, `modifiedTempo`. **Non sono un contratto di scheduling audio sample-accurate.** In [PlayerSettings](packages/alphatab/src/PlayerSettings.ts), il buffer predefinito è 500 ms e l'intervallo degli aggiornamenti AudioWorklet è 10 ms; quest'ultimo non rappresenta la latenza totale.
+Gli eventi `playerPositionChanged`, `playerStateChanged`, `playerFinished`, `playedBeatChanged`, `activeBeatsChanged`, `midiEventsPlayed` consentono feedback UI e logica applicativa. `packages/alphatab/src/synth/PositionChangedEventArgs.ts` include tick, millisecondi, estremi, `isSeek`, `originalTempo`, `modifiedTempo`. **Non sono un contratto di scheduling audio sample-accurate.** In `packages/alphatab/src/PlayerSettings.ts`, il buffer predefinito è 500 ms e l'intervallo degli aggiornamenti AudioWorklet è 10 ms; quest'ultimo non rappresenta la latenza totale.
 
 ### Backing track e media esterni
 
 `PlayerMode.EnabledAutomatic` sceglie la backing track se presente, altrimenti la sintesi; `EnabledSynthesizer`, `EnabledBackingTrack`, `EnabledExternalMedia` forzano la sorgente. La selezione è verificabile in `AlphaTabApiBase._setupOrDestroyPlayer()`; non è un mixer parallelo.
 
-- `model.BackingTrack.rawAudioFile` contiene il file audio; `Score.backingTrack` lo associa allo spartito. Nel browser l'output usa un `HTMLAudioElement`: [AudioElementBackingTrackSynthOutput.ts](packages/alphatab/src/platform/javascript/AudioElementBackingTrackSynthOutput.ts).
+- `model.BackingTrack.rawAudioFile` contiene il file audio; `Score.backingTrack` lo associa allo spartito. Nel browser l'output usa un `HTMLAudioElement`: `packages/alphatab/src/platform/javascript/AudioElementBackingTrackSynthOutput.ts`.
 - `Score.applyFlatSyncPoints()` / `exportFlatSyncPoints()` permettono una mappa persistibile separatamente: `barIndex`, `barPosition`, `barOccurence`, `millisecondOffset`. `api.updateSyncPoints()` aggiorna il player. Non emerge un servizio di allineamento automatico audio/spartito.
-- In modalità esterna, `api.player.output` può essere trattato come `synth.IExternalMediaSynthOutput`: `handler` implementa `IExternalMediaHandler` (`play`, `pause`, `seekTo`, volume, velocità, durata); `updatePosition(currentTime)` riceve millisecondi assoluti dal media. Il contratto è pubblico in [ExternalMediaPlayer.ts](packages/alphatab/src/synth/ExternalMediaPlayer.ts); le classi concrete sono interne. Il clock esterno può così guidare posizione e cursore senza fornire audio ad alphaTab.
+- In modalità esterna, `api.player.output` può essere trattato come `synth.IExternalMediaSynthOutput`: `handler` implementa `IExternalMediaHandler` (`play`, `pause`, `seekTo`, volume, velocità, durata); `updatePosition(currentTime)` riceve millisecondi assoluti dal media. Il contratto è pubblico in `packages/alphatab/src/synth/ExternalMediaPlayer.ts`; le classi concrete sono interne. Il clock esterno può così guidare posizione e cursore senza fornire audio ad alphaTab.
 - **Limite sostanziale:** il synth live eredita `AlphaSynthBase.updateSyncPoints()` e `loadBackingTrack()` che non effettuano operazioni. `BackingTrackPlayer` applica invece i sync point; l'export audio può applicarli con `AudioExportOptions.useSyncPoints`. Non si può presumere che i sync point adattino automaticamente la sintesi live a una registrazione con tempo variabile.
 
 ## Copertura dei requisiti
@@ -73,13 +80,13 @@ Con clock distinti restano rischi di drift, jitter, latenza diversa e seek non a
 
 ## Piattaforme e possibili estensioni upstream
 
-La versione web usa DOM, Web Workers e Web Audio; AudioWorklet richiede il contesto sicuro secondo `BrowserUiFacade.createWorkerPlayer()`. Font, SoundFont e script worker/worklet devono essere distribuibili nell'host. [alphaTab.main.ts](packages/alphatab/src/alphaTab.main.ts) segnala esplicitamente worker/worklet non supportati in Node.js: rendering/parsing headless non implicano playback Node pronto all'uso. L'accesso `getUserMedia()` individuato nell'output web serve ai permessi per enumerare dispositivi di uscita, non implementa acquisizione della chitarra.
+La versione web usa DOM, Web Workers e Web Audio; AudioWorklet richiede il contesto sicuro secondo `BrowserUiFacade.createWorkerPlayer()`. Font, SoundFont e script worker/worklet devono essere distribuibili nell'host. `packages/alphatab/src/alphaTab.main.ts` segnala esplicitamente worker/worklet non supportati in Node.js: rendering/parsing headless non implicano playback Node pronto all'uso. L'accesso `getUserMedia()` individuato nell'output web serve ai permessi per enumerare dispositivi di uscita, non implementa acquisizione della chitarra.
 
-Sono presenti port .NET e Kotlin, con TypeScript come sorgente di riferimento. Il core [AlphaTab.csproj](packages/csharp/src/AlphaTab/AlphaTab.csproj) dichiara `netstandard2.0`; [AlphaTab.Windows.csproj](packages/csharp/src/AlphaTab.Windows/AlphaTab.Windows.csproj) è Windows e include WPF/WinForms. [NAudioSynthOutput.cs](packages/csharp/src/AlphaTab.Windows/NAudioSynthOutput.cs) usa `DirectSoundOut`, non ASIO. Kotlin include adattatori Android; ciò non prova un adattatore desktop per ogni OS. Disponibilità di backend nativi, distribuzione e parità operativa dei port richiedono verifiche specifiche.
+Sono presenti port .NET e Kotlin, con TypeScript come sorgente di riferimento. Il core `packages/csharp/src/AlphaTab/AlphaTab.csproj` dichiara `netstandard2.0`; `packages/csharp/src/AlphaTab.Windows/AlphaTab.Windows.csproj` è Windows e include WPF/WinForms. `packages/csharp/src/AlphaTab.Windows/NAudioSynthOutput.cs` usa `DirectSoundOut`, non ASIO. Kotlin include adattatori Android; ciò non prova un adattatore desktop per ogni OS. Disponibilità di backend nativi, distribuzione e parità operativa dei port richiedono verifiche specifiche.
 
 **Nessun requisito elencato dimostra la necessità di modificare alphaTab**, se la composizione audio è esterna. Potrebbero richiedere una nuova API upstream, qualora fossero vincoli obbligatori: adattamento live del synth ai sync point, stem PCM per traccia da una singola istanza, scheduling con timestamp/clock condiviso nel player standard, iniezione diretta dell'output nell'`AlphaTabApi` browser senza facciata personalizzata. Sono capacità aggiuntive rispetto ai contratti osservati, non motivi già accertati per un fork.
 
-Il manifest dichiara MPL-2.0; distribuzione e licenze degli asset restano da valutare sul prodotto concreto. L'attribuzione grafica deve rimanere visibile secondo [AGENTS.md](AGENTS.md); rimozione o occultamento richiedono il permesso dei maintainer. Le UI personalizzate devono preservarla.
+Il manifest dichiara MPL-2.0; distribuzione e licenze degli asset restano da valutare sul prodotto concreto. L'attribuzione grafica deve rimanere visibile secondo il file `AGENTS.md` del checkout upstream esaminato; rimozione o occultamento richiedono il permesso dei maintainer. Le UI personalizzate devono preservarla.
 
 ## Quanto non è verificato staticamente
 

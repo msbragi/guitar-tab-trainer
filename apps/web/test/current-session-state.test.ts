@@ -24,6 +24,15 @@ describe('stato corrente ripristinabile', () => {
     expect(parseCurrentSessionState(captureCurrentSessionState(valid.view, initialTransportState(), initialMixerState()))).not.toBeNull();
   });
 
+  it('conserva la visibilità e accetta snapshot precedenti senza il campo', () => {
+    const saved = snapshot();
+    expect(parseCurrentSessionState(saved)).not.toBeNull();
+    const withVisibility = { ...saved, view: { ...saved.view, hiddenTracks: [0, 2] } };
+    expect(parseCurrentSessionState(withVisibility)?.view.hiddenTracks).toEqual([0, 2]);
+    expect(captureCurrentSessionState(withVisibility.view, initialTransportState(), initialMixerState()).view.hiddenTracks).toEqual([0, 2]);
+    expect(parseCurrentSessionState({ ...saved, view: { ...saved.view, hiddenTracks: [-1] } })).toBeNull();
+  });
+
   it('ripristina con comandi core, senza Play, rispettando il bordo B esclusivo', () => {
     let receive: (event: TransportEvent) => void = () => {};
     const port = { subscribeTransport: (listener: typeof receive) => { receive = listener; return () => {}; },

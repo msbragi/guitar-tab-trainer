@@ -8,7 +8,7 @@ The goal is to provide an environment for learning guitar parts through interact
 
 The project is also an experiment in AI-assisted software development, with human supervision of architectural decisions and validation.
 
-**Current status:** M0–M4, including synthesized playback, track mixer, visual feedback, EN/IT tooltips, and compact transport, are implemented. The user reported that the app works after manual testing and accepted M4 as the baseline for M5 analysis. Automated verification still has four open browser scenarios; M5 is not implemented.
+**Current status:** M0–M3 are complete. **M4 — Playback & Fretboard** is functionally complete, with refinements and manual verification still open. It includes synthesized playback, mixer, bidirectional score synchronization, current-session recovery, and a synchronized fretboard with animated articulations. **M5 — Guitar Capture & Play Session** is next. **M6 — Storage & Projects** will follow, with storage technology open. See [TODO.md](TODO.md).
 
 ## Development Environment
 
@@ -63,7 +63,7 @@ The layout follows [the design reference](docs/GTT-UI.png) with standalone Angul
 - Header with a guitar mark, application name/version, active section, EN/IT selector, and collapsible mobile navigation.
 - Practice, Library, Projects, Virtual Rig, and Settings navigation. Navigation is local UI state; no URL router is introduced for unfinished sections.
 - Collapsible file sidebar with Open Tab. Recent files and favorites are explicitly unavailable placeholders, with no fictitious entries or musical-library persistence.
-- Central song information and alphaTab viewer. The viewer stays mounted across section changes, retaining the loaded document and renderer.
+- Expandable song information above the mixer in the right sidebar, and a central alphaTab viewer. The viewer stays mounted across section changes, retaining the loaded document and renderer.
 - Score & Tab, Tab Only, and Notation Only modes; zoom at 75%, 100%, 125%, and 150%; browser fullscreen where supported.
 - Track panel populated exclusively from the loaded score, with mute/unmute, cumulative solo/unsolo, and independent track volume through the alphaTab synthesizer.
 - Permanent bottom transport area with synthesized playback, timeline, A/B loop, speed, and read-only tempo. Master volume is active; the desktop transport uses a compact horizontal layout and wraps on smaller screens.
@@ -83,7 +83,7 @@ A small synchronous script in the document head applies the saved/system theme b
 - Local Guitar Pro file selection (GP3, GP4, GP5, GPX, GP).
 - Score loading and metadata extraction.
 - Music notation and tablature rendering.
-- Rendering of all available tracks.
+- Rendering of available tracks with visibility controls independent of audio mute/solo.
 - Loading and error states.
 - Retry handling and cleanup of previous rendering instances.
 - Preservation of original Guitar Pro files.
@@ -96,6 +96,11 @@ A small synchronous script in the document head applies the saved/system theme b
 - Stop returns to the active range start or the song start. Loop B is exclusive. Small seek rounding comes from the player.
 - One authoritative transport state in the framework-independent core; Angular presents its snapshots and forwards commands.
 - Local SoundFont, worker, and worklet assets; audio errors keep the score readable. Reopen the file to retry.
+- Bidirectional timeline/score seek, including while stopped.
+- Independent visibility controls and a track reset action alongside the mixer.
+- IndexedDB recovery of the current GP, position, loop, mixer, view and visibility after refresh, without autoplay.
+- Optional synchronized fretboard with track selection, note names and guitar position references.
+- Effect annotations and animated paths for bends/releases, slides with a destination, and hammer-on/pull-off.
 
 Playback becomes available after audio preparation. Press Play to start from a user gesture. The timeline uses the executed sequence, including repeats; displayed times follow the current playback speed. Use localhost or HTTPS for AudioWorklet.
 
@@ -142,13 +147,18 @@ Core and adapter errors expose language-independent `ScoreLoadError` codes. The 
 
 The operating system's native file picker retains its browser/system language. The application's file control and messages use the selected UI language.
 
-### Planned Features
+### Next milestones
 
-- Synchronized backing track playback.
-- Independent audio source mixing.
-- Live guitar input through audio interfaces or USB modelers.
-- Local study projects and session persistence.
-- Future pitch processing and virtual guitar rigs.
+M5 will introduce work sessions on selected measures, original accompaniment,
+real-guitar recording limited to the selected segment, and playback starting
+before that segment. Audio will be converted into musical events and tablature
+through a replaceable Audio → MIDI engine. Hendrix is the first candidate to
+evaluate. The fretboard will support note review and correction, with the
+original phrase and its variants kept separate.
+
+M6 will address persistent songs, work sessions, recordings and variants.
+Storage technology will be selected then. The M4 current-session recovery
+remains the existing browser feature.
 
 ## Local Assets and Offline Operation
 
@@ -217,13 +227,18 @@ In managed sandbox environments, browser tests may require permission to open lo
 
 The Guitar Pro test corpus is documented in [tests/fixtures/alphatab/README.md](tests/fixtures/alphatab/README.md).
 
-Current M4 finalization validation: build, typecheck and boundaries passed; **66 Node tests in 12 files passed**. The latest Chromium suite finished with **30 passed and 4 failed out of 34**. The open cases concern a shared-channel fixture, an audio unmute signal check, and two responsive helpers targeting controls in a collapsed panel. Causes and evidence are recorded in [the handoff](docs/SESSION_HANDOFF.md); the suite must not be described as green. The user requested stopping further automated validation, tested the app personally, and reported “It seems all ok”. No additional tests were run for the final documentation update.
+Validation results belong to different development stages. The latest H/P
+increment passed the build, boundary checks and 16 targeted Node tests.
+The last recorded full Chromium suite is historical, with 30 passed and
+4 failed after the mixer work. Later targeted runs and positive user testing
+do not establish a current full-suite result.
 
-Earlier M4 playback validation, before mixer/UI finalization: 57 Node tests and 27 Chromium production tests passed, plus six playback scenarios against an isolated development server. These historical results do not supersede the current browser failures.
-
-UI shell validation: build, typecheck, architectural boundary checks, **45 automated tests**, and **21 Chromium browser tests** passed. The browser suite includes all previous M3/localization scenarios plus navigation, disabled future controls, panel collapse, theme persistence/system changes, theme initialization before Angular, display modes, zoom, fullscreen where available, and mobile rendering. Desktop dark and mobile screenshots were inspected. Browser tests use the production build on port 4173; the user's hot-reload server on port 4200 is left running.
-
-Internationalization validation: 35 automated tests and 14 Chromium tests against the production build passed, together with build, typecheck, and a frozen-lockfile offline installation. Browser scenarios cover detection, persistence, runtime switching, English fallback, unavailable storage, translated errors, and unchanged score metadata/rendering. The additional development-server check was skipped because port 4200 was occupied by the user's active hot-reload session; that server was left running.
+The user confirmed visibility recovery after refresh and the H/P rendering.
+For subsequent UI changes, the agreed workflow is build verification and
+manual browser testing by the user. Full historical suites should be run
+only when relevant to the task. Evidence and open issues are recorded in
+[docs/M4_PLAYBACK.md](docs/M4_PLAYBACK.md), with earlier results in
+[docs/HISTORY.md](docs/HISTORY.md).
 
 ## Architecture
 
@@ -270,8 +285,8 @@ No backend, native Audio Engine, or desktop runtime has been introduced.
 - The verified test corpus covers GP3, GP5, and GP7; GP4 and GPX remain untested.
 - Successful SVG rendering and metadata extraction do not guarantee complete fidelity of musical effects.
 - General manual acceptance is recorded; detailed musical fidelity, loop artifacts, device/browser coverage and native-device latency are not certified. Synchronized backing tracks are not implemented.
-- Four automated browser scenarios remain open; see the handoff, including the known synthetic-fixture issues.
-- No persistent study-project storage or SQLite integration; only UI language and appearance preferences are persisted.
+- Historical browser failures and the later refresh-test assertion remain verification debt. See the M4 document for the fixture and selector limitations.
+- The current GP and its state are recovered through IndexedDB. Persistent study projects are planned for M6, with storage technology open.
 - No native audio device integration.
 - No desktop packaging.
 
@@ -281,7 +296,7 @@ Development milestones and their current status are tracked in [TODO.md](TODO.md
 
 For the current state, manual acceptance, automated-test debt, environment details and restart instructions, read [docs/SESSION_HANDOFF.md](docs/SESSION_HANDOFF.md). The next-session prompt and M5 analysis checklist are in [docs/M5_START.md](docs/M5_START.md).
 
-Next: M5 analysis and planning for external audio and a shared transport clock. Compare PCM, external MIDI synthesis and prerendering, and agree on a prototype and measurable thresholds before implementation. Do not automatically restart the M4 test campaign; the user prefers direct manual validation.
+Next is M5 Guitar Capture & Play Session, delivered progressively from an agreed first increment. Hendrix is a candidate for replaceable Audio → MIDI conversion. M6 will design project storage. Earlier PCM/MIDI/prerendering plans are preserved as technical history in [docs/HISTORY.md](docs/HISTORY.md).
 
 ## Licensing
 

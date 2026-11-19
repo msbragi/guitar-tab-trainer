@@ -18,6 +18,8 @@ export class ScoreSession {
   private readonly current = signal<ScoreState>({ status: 'idle' });
   readonly state = this.current.asReadonly();
   readonly available = signal(false);
+  private readonly hidden = signal<readonly number[]>([]);
+  readonly hiddenTracks = this.hidden.asReadonly();
   readonly viewBusy = signal(false);
   readonly viewError = signal<ScoreErrorCode | null>(null);
   readonly mode = signal<ScoreViewMode>('score-tab');
@@ -51,7 +53,7 @@ export class ScoreSession {
   private applyingRestore = false;
 
   private snapshot(): CurrentSessionState {
-    const state = captureCurrentSessionState({ mode: this.mode(), scale: this.scale() }, this.transport(), this.mixer());
+    const state = captureCurrentSessionState({ mode: this.mode(), scale: this.scale(), hiddenTracks: this.hidden() }, this.transport(), this.mixer());
     return { ...state, transport: this.pendingTransport ?? state.transport, mixer: this.pendingMixer ?? state.mixer };
   }
   private scheduleSave(): void {
@@ -120,7 +122,7 @@ export class ScoreSession {
     this.adapter = adapter;
     this.controller = controller;
     const unsubscribe = controller.subscribe((state) => {
-      if (state.status === 'loading') { adapter.reset(); this.viewError.set(null); }
+      if (state.status === 'loading') { adapter.reset(); this.hidden.set([]); this.viewError.set(null); }
       this.current.set(state);
     });
     this.available.set(true);
@@ -149,6 +151,13 @@ export class ScoreSession {
     };
   }
 
+  fretboardFor(trackIndex: number) {
+    if (this.state().status !== 'ready') return null;
+    const { tick, endTick } = this.transport();
+    const frame = this.adapter?.fretboardAt(trackIndex, tick) ?? null;
+    return frame && endTick > 0 && tick >= endTick ? { ...frame, positions: [] } : frame;
+  }
+
   play(): void { this.transportController?.play(); }
   pause(): void { this.transportController?.pause(); }
   stop(): void { this.transportController?.stop(); }
@@ -159,6 +168,40 @@ export class ScoreSession {
   }
   setLoopPoint(point: 'a' | 'b'): void { this.transportController?.setPoint(point); }
   toggleLoop(): void { this.transportController?.toggleLoop(); }
+  async toggleTrackVisibility(index: number): Promise<void> {
+    const hidden = this.hidden();
+    await this.showTracks(hidden.includes(index) ? hidden.filter((item) => item !== index) : [...hidden, index]);
+  }
+
+  async resetTracks(): Promise<void> {
+    if (this.viewBusy() || this.state().status !== 'ready') return;
+    const mixer = this.mixerController;
+    for (const { index } of mixer?.state.tracks ?? []) {
+      const track = mixer?.state.tracks.find((item) => item.index === index);
+      if (!mixer || !track) continue;
+      if (track.muted) mixer.toggleMute(index);
+      if (track.solo) mixer.toggleSolo(index);
+      if (track.volume !== track.defaultVolume) mixer.setVolume(index, track.defaultVolume);
+    }
+    if (this.hidden().length) await this.showTracks([]);
+  }
+
+  private async showTracks(hidden: readonly number[]): Promise<void> {
+    const state = this.state();
+    if (!this.adapter || state.status !== 'ready' || this.viewBusy()) return;
+    const visible = state.score.tracks.filter(({ index }) => !hidden.includes(index)).map(({ index }) => index);
+    if (!visible.length) return;
+    this.viewBusy.set(true);
+    this.viewError.set(null);
+    try {
+      await this.adapter.setVisibleTracks(visible);
+      this.hidden.set(hidden);
+      this.flushSave();
+    } catch (error: unknown) {
+      this.viewError.set(error instanceof ScoreLoadError ? error.code : 'render-failed');
+    } finally { this.viewBusy.set(false); }
+  }
+
   toggleMute(index: number): void { this.mixerController?.toggleMute(index); }
   toggleSolo(index: number): void { this.mixerController?.toggleSolo(index); }
   setTrackVolume(index: number, volume: number): void { this.mixerController?.setVolume(index, volume); }
@@ -190,6 +233,13 @@ export class ScoreSession {
     if (!loaded || !bytes) { this.pendingTransport = undefined; this.pendingMixer = undefined; return; }
     const view = saved?.view ?? this.preferences;
     if (this.mode() !== view.mode || this.scale() !== view.scale) await this.setView(view.mode, view.scale);
+    if (generation !== this.loadGeneration || this.controller !== controller) return;
+    const savedHidden = saved?.view.hiddenTracks ?? [];
+    const state = this.state();
+    if (state.status === 'ready') {
+      const hidden = state.score.tracks.filter(({ index }) => savedHidden.includes(index)).map(({ index }) => index);
+      if (hidden.length && hidden.length < state.score.tracks.length) await this.showTracks(hidden);
+    }
     if (generation !== this.loadGeneration || this.controller !== controller) return;
     // I byte originali sono distinti dalla copia consegnata dal core all'adapter.
     const file = { id: this.document.defaultView!.crypto.randomUUID(), name: source.name, bytes };

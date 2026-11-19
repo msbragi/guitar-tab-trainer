@@ -6,6 +6,8 @@ import { parseScore } from './parse-score.js';
 import { applyScoreView } from './score-view.js';
 import type { ScoreViewMode } from './view-mode.js';
 import { configureAudioRuntime } from './browser-audio-runtime.js';
+import { readFretboard } from './fretboard.js';
+import type { FretboardFrame } from './fretboard-frame.js';
 import { describeMixerTracks } from './mixer-tracks.js';
 
 export interface AlphaTabViewOptions {
@@ -27,6 +29,10 @@ export class AlphaTabScoreAdapter implements ScoreLoader, TransportPort, MixerPo
   private readonly mixerListeners = new Set<(event: MixerEvent) => void>();
 
   constructor(private readonly host: HTMLElement, private readonly options: AlphaTabViewOptions) {}
+
+  fretboardAt(trackIndex: number, tick: number): FretboardFrame | null {
+    return this.api ? readFretboard(this.api, trackIndex, tick) : null;
+  }
 
   async load(bytes: Uint8Array): Promise<ScoreSummary> {
     if (this.destroyed) throw new ScoreLoadError('session-closed');
@@ -179,6 +185,15 @@ export class AlphaTabScoreAdapter implements ScoreLoader, TransportPort, MixerPo
       api.updateSettings();
       if (api.isReadyForPlayback) ready();
     } catch { failed(); }
+  }
+
+  async setVisibleTracks(indexes: readonly number[]): Promise<void> {
+    const api = this.api;
+    if (!api?.score || this.destroyed) return;
+    if (this.cancel) throw new ScoreLoadError('busy');
+    const tracks = api.score.tracks.filter(({ index }) => indexes.includes(index));
+    if (!tracks.length) return;
+    await this.render(api, () => api.renderTracks(tracks));
   }
 
   /** Cambia soltanto la presentazione della copia in memoria, senza riscrivere il file. */

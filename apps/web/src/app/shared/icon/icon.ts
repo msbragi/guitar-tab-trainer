@@ -20,6 +20,9 @@ const paths = {
   previous: 'M5 5v14M19 5l-11 7 11 7z',
   stop: 'M6 6h12v12H6z',
   loop: 'M4 8h14l-3-3m3 3-3 3M20 16H6l3-3m-3 3 3 3',
+  eye: 'M2 12s4-7 10-7 10 7 10 7-4 7-10 7-10-7-10-7zM15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0z',
+  'eye-off': 'M3 3l18 18M10 5c7-1 12 7 12 7a22 22 0 0 1-4 4M6 7a22 22 0 0 0-4 5s4 7 10 7c2 0 4-1 5-2',
+  reset: 'M4 11a8 8 0 1 1 2 6M4 5v6h6',
   volume: 'M3 9h4l5-5v16l-5-5H3zM16 8a6 6 0 010 8m3-11a10 10 0 010 14',
 } as const;
 export type IconName = keyof typeof paths;

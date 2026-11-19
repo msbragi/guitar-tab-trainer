@@ -1,0 +1,111 @@
+<div class="fretboard-controls">
+  <label for="fretboard-track">{{ 'fretboard.track' | transloco }}</label>
+  <select id="fretboard-track" #track (change)="requestedTrack.set(+track.value)">
+    @for (item of tracks(); track item.index) {
+      <option [value]="item.index" [selected]="item.index === selectedTrack()">{{ item.name || (item.index + 1) }}</option>
+    }
+  </select>
+  @if (frame(); as current) {
+    @if (current.capo > 0) {
+      <span>{{ 'fretboard.capo' | transloco: { fret: current.capo } }}</span>
+    }
+  }
+</div>
+@if (frame(); as current) {
+  <div class="fretboard-scroll" tabindex="0" role="region" [attr.aria-label]="'fretboard.title' | transloco">
+    <div class="fretboard-surface" [style.min-width.px]="boardWidth()">
+    <table [attr.aria-label]="'fretboard.title' | transloco">
+      <thead>
+        <tr>
+          <th scope="col">{{ 'fretboard.string' | transloco }}</th>
+          @for (fret of frets(); track fret) {
+            <th scope="col">
+              <span [class.fret-reference]="referenceFrets.has(fret)" [class.double-reference]="fret === 12 || fret === 24">{{ fret }}</span>
+            </th>
+          }
+        </tr>
+      </thead>
+      <tbody>
+        @for (pitch of current.tuning; track $index; let row = $index) {
+          @let string = current.tuning.length - row;
+          <tr>
+            <th scope="row">{{ pitchName(pitch) }}</th>
+            @for (fret of frets(); track fret) {
+              <td [class.nut]="fret === 0">
+                @if (active().has(string + ':' + fret)) {
+                  <span class="fret-marker" [attr.data-string]="string" [attr.data-fret]="fret">
+                    <span class="fret-note">{{ ('fretboard.notes.' + pitchClass(pitch + fret + current.capo)) | transloco }}</span>
+                    <span class="fret-effects" aria-hidden="true">
+                      @for (effect of effectsByPosition().get(string + ':' + fret) ?? []; track $index) {
+                        <span>{{ effectSymbol(effect) }}</span>
+                      }
+                    </span>
+                    <span class="fret-number">{{ fret }}</span>
+                  </span>
+                }
+              </td>
+            }
+          </tr>
+        }
+      </tbody>
+    </table>
+    @if (drawings().length) {
+      <svg class="gesture-overlay" [attr.viewBox]="'0 0 ' + boardWidth() + ' ' + boardHeight()"
+        preserveAspectRatio="none" aria-hidden="true" focusable="false">
+        @for (drawing of drawings(); track $index) {
+          <g [attr.data-gesture]="drawing.kind">
+            <path class="gesture-preview" [attr.d]="drawing.path" />
+            <path class="gesture-played" [attr.d]="drawing.playedPath" />
+            @if (drawing.source; as source) {
+              <circle class="gesture-target" [attr.cx]="source.x" [attr.cy]="source.y" r="8" />
+              <text class="gesture-target-label" [attr.x]="source.x" [attr.y]="source.y">{{ source.fret }}</text>
+            }
+            @if (drawing.target; as target) {
+              <circle class="gesture-target" [attr.cx]="target.x" [attr.cy]="target.y" r="8" />
+              <text class="gesture-target-label" [attr.x]="target.x" [attr.y]="target.y">{{ target.fret }}</text>
+              <text class="gesture-target-note" [attr.x]="target.x + 9" [attr.y]="target.y - 9">
+                {{ ('fretboard.notes.' + pitchClass(target.pitch)) | transloco }}
+              </text>
+            }
+            <circle class="gesture-cursor" [attr.cx]="drawing.cursor.x" [attr.cy]="drawing.cursor.y" r="3.5" />
+          </g>
+        }
+      </svg>
+    }
+    </div>
+  </div>
+  @if (effectPositions().length) {
+    <ul class="effect-details" [attr.aria-label]="'fretboard.effects.title' | transloco">
+      @for (position of effectPositions(); track position.string + ':' + position.fret) {
+        @for (effect of position.effects; track $index) {
+          <li [attr.data-effect]="effect.kind">
+            <span class="effect-position">{{ 'fretboard.effects.position' | transloco: { string: position.string, fret: position.fret } }}</span>
+            <span>{{ effectSymbol(effect) }}</span>
+            @switch (effect.kind) {
+              @case ('bend') {
+                <span>{{ 'fretboard.effects.bend' | transloco }} {{ effect.tones.join(' → ') }} {{ 'fretboard.effects.tones' | transloco }}</span>
+              }
+              @case ('vibrato') {
+                <span>{{ (effect.wide ? 'fretboard.effects.vibratoWide' : 'fretboard.effects.vibrato') | transloco }}</span>
+              }
+              @case ('hammer-on') {
+                <span>{{ 'fretboard.effects.hammerOn' | transloco }} {{ effect.sourceFret }} → {{ effect.targetFret }}</span>
+              }
+              @case ('pull-off') {
+                <span>{{ 'fretboard.effects.pullOff' | transloco }} {{ effect.sourceFret }} → {{ effect.targetFret }}</span>
+              }
+              @case ('slide') {
+                <span>{{ (effect.pick ? 'fretboard.effects.pickSlide' : effect.legato ? 'fretboard.effects.legatoSlide' : 'fretboard.effects.slide') | transloco }}
+                  {{ (effect.phase === 'in' ? 'fretboard.effects.in' : 'fretboard.effects.out') | transloco }}
+                  @if (effect.targetFret !== undefined) { → {{ effect.targetFret }} }
+                </span>
+              }
+            }
+          </li>
+        }
+      }
+    </ul>
+  }
+} @else {
+  <p>{{ 'fretboard.unavailable' | transloco }}</p>
+}

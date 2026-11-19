@@ -19,7 +19,8 @@
         </section>
       }
     </main>
-    <gp-tracks-panel [collapsed]="tracksCollapsed()" [tracks]="tracks()" [mixer]="session.mixer()"
+    <gp-tracks-panel [collapsed]="tracksCollapsed()" [tracks]="tracks()" [scoreState]="session.state()" [mixer]="session.mixer()" [hiddenTracks]="session.hiddenTracks()" [viewBusy]="session.viewBusy()"
+      (visibility)="session.toggleTrackVisibility($event)" (reset)="session.resetTracks()"
       (toggle)="tracksCollapsed.set(!tracksCollapsed())" (mute)="session.toggleMute($event)" (solo)="session.toggleSolo($event)"
       (volumeChange)="session.setTrackVolume($event.index, $event.volume)" />
   </div>

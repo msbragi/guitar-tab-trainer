@@ -1,5 +1,4 @@
 @let current = session.state();
-<gp-song-info [state]="current" />
 <div class="score-workspace">
   <div class="score-toolbar">
     <div class="view-modes" role="group" [attr.aria-label]="'viewer.mode' | transloco">
@@ -41,4 +40,10 @@
     @if (current.status === 'ready') { <p class="view-hint">{{ 'viewer.modeHint' | transloco }}</p> }
     <div class="score-attribution">{{ 'footer.poweredBy' | transloco }} <a href="https://alphatab.net" target="_blank" rel="noopener noreferrer">alphaTab</a></div>
   </div>
+  @if (current.status === 'ready') {
+    <details class="fretboard-panel" #fretboardPanel (toggle)="fretboardOpen.set(fretboardPanel.open)">
+      <summary>{{ 'fretboard.title' | transloco }}</summary>
+      @if (fretboardOpen()) { <gp-fretboard [(requestedTrack)]="fretboardTrack" /> }
+    </details>
+  }
 </div>

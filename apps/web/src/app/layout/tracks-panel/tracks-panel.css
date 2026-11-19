@@ -1,1 +1,10 @@
 /* Shared styles are defined in src/styles.css. */
+
+.track-controls { gap: 4px; }
+.track-controls button { min-width: 26px; min-height: 30px; padding-inline: 3px; }
+.track-controls input[type='range'] { flex: 1; min-width: 0; }
+.reset-tracks { margin-inline-end: auto; }
+
+@media (max-width: 760px) {
+  .track-controls button { min-width: 30px; min-height: 38px; }
+}

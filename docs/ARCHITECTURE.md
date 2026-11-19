@@ -1,219 +1,98 @@
-# Guitar Tab Trainer — Architecture
+# Guitar Tab Trainer — Architettura
 
-## 1. Stato
+## Stato e principi
 
-Architettura preliminare.
+M0–M3 completate. M4 Playback & Fretboard funzionalmente completata,
+con rifiniture e verifiche manuali aperte. M5 Guitar Capture & Play Session
+e M6 Storage & Projects sono le prossime milestone della roadmap.
+[Roadmap e attività](../TODO.md)
 
-Le decisioni qui descritte costituiscono la base progettuale. Le scelte ancora aperte saranno risolte durante le successive fasi di analisi e prototipazione.
+- alphaTab è una dipendenza esterna utilizzata attraverso API pubbliche.
+- Il core TypeScript mantiene contratti, stato e politiche indipendenti da Angular.
+- UI, accesso ai dati musicali e processing audio hanno responsabilità distinte.
+- I file Guitar Pro originali vengono preservati.
+- L'applicazione è orientata all'uso locale/offline e a moduli piccoli con interfacce esplicite.
 
-## 2. Principi architetturali
+## Architettura implementata
 
-- alphaTab viene utilizzato come componente esterno, senza fork.
-- L'applicazione possiede un proprio orchestratore.
-- L'interfaccia utente è indipendente dalla logica musicale.
-- Il motore audio è separato dal rendering delle tablature.
-- I moduli comunicano attraverso contratti espliciti.
-- Le dipendenze devono essere orientate verso interfacce stabili.
-- Evitare complessità e infrastrutture non necessarie.
-
-## 3. Stack iniziale
-
-| Componente | Tecnologia |
+| Modulo | Responsabilità |
 |---|---|
-| Ambiente di sviluppo | Debian WSL2 |
-| Monorepo | pnpm workspaces |
-| UI | Angular |
-| Orchestratore | TypeScript |
-| Music Engine | alphaTab |
-| Audio Engine | Da definire |
-| Database locale | SQLite |
-| Desktop runtime | Da definire |
+| `packages/core` | Caricamento, trasporto e mixer attraverso controller e port. TypeScript indipendente da Angular, DOM, alphaTab e storage concreto. |
+| `packages/alphatab-adapter` | Parsing, rendering, player e mixer del synth. Proiezione dei dati musicali per la fretboard, compresi gli effetti. |
+| `apps/web` | UI Angular, composizione in ScoreSession, preferenze e recupero della sessione corrente. Disegno della fretboard e interazione utente. |
 
-## 4. Componenti
+Le dipendenze sono UI → core/adapter e adapter → core/alphaTab.
+I tipi musicali di alphaTab rimangono nell'adapter.
+La UI riceve dati di presentazione senza riferimenti al modello della libreria.
+`pnpm check:boundaries` verifica i confini degli import.
 
-### 4.1 UI Application
+L'ambiente attuale è un'app Angular nel browser, sviluppata in Debian WSL2.
+Versioni fissate nei manifest e nel lockfile, con alphaTab 1.9.0.
+I componenti Angular hanno cartelle dedicate con TypeScript, HTML e CSS separati.
+Il target desktop Windows e il relativo runtime richiedono una scelta futura.
+Le directory riservate audio-engine e study-project restano predisposizioni.
 
-Responsabilità:
+## Playback e visualizzazione M4
 
-- Visualizzazione della tablatura.
-- Controlli di playback.
-- Mixer e configurazione.
-- Gestione dei progetti di studio.
-- Interazione con l'utente.
+Il player sintetizzato di alphaTab è l'autorità temporale della sorgente M4.
+TransportController mantiene lo stato applicativo e convalida i comandi.
+Il synth è forzato anche per GP con una backing incorporata.
+Asset audio, font e licenze vengono distribuiti localmente.
 
-Non deve contenere direttamente logica audio o musicale complessa.
+La timeline usa tick della sequenza eseguita, incluse ripetizioni e finali.
+Millisecondi e tempo effettivo provengono dal player. Le coordinate della
+notazione sono risolte nell'adapter. I seek espliciti attraversano il core
+e rispettano il range A/B, con B esclusivo.
+Da fermo vengono filtrate le notifiche di posizione automatiche tardive.
 
-### 4.2 Application Core / Orchestrator
+Il mixer agisce tramite le API del synth. I controlli audio delle tracce con
+canali MIDI condivisi sono collegati. La visibilità delle parti è indipendente
+da mute/solo. La selezione della fretboard è locale al suo pannello.
 
-Responsabilità:
+La fretboard deriva posizioni, destinazioni e avanzamento dai tick confermati.
+Disegna anteprime e articolazioni con una proiezione didattica dei dati del GP.
+Preparazione audio, rendering e gestione degli errori hanno lifecycle distinti.
+Comportamento, verifiche e limiti sono descritti in [M4_PLAYBACK.md](M4_PLAYBACK.md).
 
-- Stato applicativo.
-- Coordinamento dei moduli.
-- Gestione del trasporto musicale.
-- Timeline e sincronizzazione.
-- Gestione dei comandi e degli eventi.
-- Coordinamento delle sessioni di studio.
+## Ripristino corrente M4
 
-Non deve dipendere da Angular.
+IndexedDB conserva una sola copia dei byte originali dell'ultimo GP caricato
+con successo e uno snapshot associato. Al refresh vengono ricreati documento
+e player, applicando lo stato attraverso i controller, senza autoplay.
+LocalStorage conserva le preferenze leggere.
 
-### 4.3 alphaTab Adapter
+Lo snapshot include posizione, A/B, velocità, mixer, vista/zoom e tracce nascoste.
+Il salvataggio accorpa gli aggiornamenti e tenta un flush alla chiusura.
+Permessi, quota e cancellazione dei dati del browser possono limitarne il recupero.
+La sostituzione atomica e l'identificatore del documento proteggono
+l'associazione fra byte e stato, anche in presenza di scritture tardive.
 
-Unico punto di integrazione diretta con alphaTab.
+## Direzione M5 — Guitar Capture & Play Session
 
-Responsabilità:
+M5 aggiungerà il ciclo di selezione della frase, accompagnamento originale,
+acquisizione limitata al segmento e conversione Audio → MIDI/tablatura.
+Il playback potrà iniziare prima del segmento di registrazione.
+Battute della notazione, occorrenze di esecuzione e intervallo audio dovranno
+essere correlati esplicitamente, soprattutto in presenza di ripetizioni.
 
-- Caricamento e interpretazione delle tablature.
-- Accesso al modello musicale.
-- Rendering.
-- Generazione MIDI e sintesi, secondo le API disponibili.
-- Conversione degli eventi alphaTab in contratti applicativi.
+Il motore di conversione sarà sostituibile. Hendrix è il primo candidato
+da valutare per compatibilità, qualità, licenza ed esigenze di esecuzione.
+La fretboard diventerà anche uno strumento per verificare e correggere
+le note convertite. L'originale e le varianti manterranno identità separate.
 
-Non deve contenere logica di business specifica dell'applicazione.
+Contratti aggiuntivi, percorso di acquisizione, clock e gestione della latenza
+saranno definiti in base al primo incremento concordato.
+Il trasporto M4 costituisce la base esistente e richiede validazione
+nell'integrazione con l'acquisizione. [Avvio M5](M5_START.md)
 
-### 4.4 Audio Engine
+## Direzione M6 — Storage & Projects
 
-Responsabilità previste:
+M6 progetterà la conservazione persistente di brani, sessioni di lavoro,
+registrazioni e varianti. La tecnologia rimane aperta.
+SQLite e filesystem erano ipotesi iniziali, conservate nello storico.
+La decisione su IndexedDB M4 riguarda il recupero corrente nel browser.
 
-- Gestione delle sorgenti audio.
-- Clock e trasporto audio.
-- Playback delle backing track.
-- Integrazione dell'audio sintetizzato.
-- Mixing e routing.
-- Selezione dei dispositivi.
-- Acquisizione e monitoring della chitarra.
-- Gestione della latenza.
-
-L'implementazione tecnologica rimane da definire.
-
-### 4.5 Study Project
-
-Responsabilità:
-
-- Catalogo dei progetti.
-- Metadati e configurazioni.
-- Gestione delle risorse locali.
-- Persistenza SQLite.
-- Sessioni e progressi.
-- Importazione ed esportazione dei progetti.
-
-Lo storage fisico deve essere accessibile mediante interfacce, evitando dipendenze dirette dal framework UI.
-
-## 5. Comunicazione tra componenti
-
-Schema logico:
-
-UI
-↓
-Orchestrator
-↓
-alphaTab Adapter / Audio Engine / Study Project
-
-L'orchestratore coordina le operazioni e mantiene lo stato applicativo.
-
-Gli eventi generati dai componenti aggiornano lo stato e vengono propagati alla UI.
-
-## 6. Gestione del playback
-
-Principio fondamentale:
-
-**Deve esistere un'unica autorità per il trasporto e la posizione temporale dell'esecuzione.**
-
-La soluzione concreta non è ancora definita.
-
-L'analisi alphaTab ha evidenziato che:
-
-- Parsing, rendering e sintesi sono utilizzabili separatamente.
-- Sono disponibili eventi e informazioni sulla timeline.
-- Il player integrato non gestisce più sorgenti audio simultanee con un clock condiviso.
-- L'applicazione dovrà coordinare autonomamente il playback simultaneo.
-
-Sono da valutare:
-
-1. Integrazione PCM del sintetizzatore alphaTab.
-2. Generazione MIDI e sintesi esterna.
-3. Eventuale prerendering audio.
-
-La scelta richiede una verifica tecnica specifica.
-
-### 6.1 Perimetro implementato in M4
-
-M4 usa il sintetizzatore integrato di alphaTab **1.9.0** come singola sorgente
-di riferimento, forzando `PlayerMode.EnabledSynthesizer` anche in presenza di
-una backing incorporata. Il player fornisce posizione e stato effettivi;
-non esiste un timer applicativo che simula l'avanzamento.
-
-`TransportController` nel core possiede l'unico stato applicativo del trasporto
-e il contratto `TransportPort`. L'adapter converte gli eventi pubblici senza
-mantenere un secondo stato applicativo. `ScoreSession` proietta gli snapshot
-immutabili in un signal Angular e inoltra comandi; i componenti presentano
-stato e controlli senza transizioni musicali autonome.
-
-I tick appartengono alla sequenza eseguita, incluse le ripetizioni. I
-millisecondi e il BPM effettivo provengono dal player alla velocità corrente;
-non sono ricavati dall'indice di battuta né dal BPM iniziale. La timeline e i
-punti A/B usano i tick; le coordinate della notazione restano nell'adapter.
-Da fermo, il core ignora notifiche di campioni tardivi e accetta soltanto
-posizionamenti espliciti (`isSeek`).
-
-La preparazione audio è distinta dal caricamento/rendering. Errori audio
-lasciano leggibile la partitura e disabilitano il trasporto; riaprire il file
-ricrea la sessione. Reset/distruzione scollegano gli eventi, chiudono l'output
-tramite API pubbliche e terminano i worker creati dall'adapter, senza dipendere
-dall'ack di un worker guasto. Font, SoundFont e script sono asset locali.
-
-La facciata integrata rimane interna all'adapter: questa milestone non
-introduce il pacchetto Audio Engine, non certifica un clock multisorgente e
-non sceglie fra PCM, MIDI esterno e prerendering. Queste decisioni restano M5,
-che richiede un'approvazione separata. Dettagli e prove in
-[M4_PLAYBACK.md](M4_PLAYBACK.md).
-
-### 6.2 Mixer e stato di avanzamento
-
-M4 include `MixerController`/`MixerPort` nel core per stato immutabile e comandi
-mute/solo/volume tracce e master. L'adapter usa esclusivamente le API pubbliche
-del synth alphaTab; la UI presenta lo stato. Non è un Audio Engine esterno.
-Tracce che condividono canali hanno controlli collegati, con limite esplicito.
-
-L'utente ha accettato operativamente M4 dopo prova manuale; la suite browser
-ha quattro casi aperti documentati nell'handoff. M5 riparte dall'analisi in
-[M5_START.md](M5_START.md): non sono ancora scelti percorso audio, clock o
-nuovi contratti multisorgente. Non inferire tali scelte dal player M4.
-
-## 7. Persistenza
-
-Modello locale:
-
-- SQLite per metadati e stato persistente.
-- File system per tablature e risorse audio.
-- Separazione tra file originali e personalizzazioni.
-
-Il progetto di studio costituisce l'unità logica principale.
-
-## 8. Distribuzione
-
-Target iniziale: applicazione desktop Windows.
-
-Sviluppo: Debian WSL2.
-
-La scelta del contenitore desktop dovrà considerare:
-
-- Integrazione Angular.
-- Accesso ai dispositivi audio.
-- Compatibilità ASIO.
-- Possibile hosting VST3.
-- Packaging e aggiornamenti.
-- Portabilità futura.
-
-Non è ancora stata selezionata una tecnologia desktop definitiva.
-
-## 9. Decisioni aperte
-
-- Implementazione dell'Audio Engine.
-- Strategia di clock e sincronizzazione.
-- Integrazione PCM oppure MIDI.
-- Framework desktop.
-- Accesso SQLite e filesystem dal runtime.
-- Organizzazione dei moduli opzionali.
-- Strategia di test dell'audio e della sincronizzazione.
-
-Queste decisioni richiedono analisi o prototipi mirati prima dell'implementazione definitiva.
+I criteri includeranno uso locale/offline, dimensioni degli audio,
+relazioni fra originali e varianti e recuperabilità delle risorse.
+Il modello persistente e le sue interfacce saranno definiti nella milestone.
+[Storico delle decisioni](HISTORY.md)

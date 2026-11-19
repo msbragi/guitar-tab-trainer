@@ -1,1 +1,6 @@
-/* Shared styles are defined in src/styles.css. */
+:host { display: block; min-width: 0; }
+details.song-info { display: block; padding: 0; margin: 8px 0; border: 1px solid var(--border); border-radius: 6px; box-shadow: none; background: var(--surface); }
+summary { cursor: pointer; padding: 10px; font-weight: 600; overflow-wrap: anywhere; }
+summary gp-icon { vertical-align: middle; margin-right: 5px; color: var(--accent); }
+section { border-top: 1px solid var(--border); padding: 8px 10px; font-size: 12px; color: var(--muted); }
+p { margin: 4px 0; overflow-wrap: anywhere; }
