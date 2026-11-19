@@ -1,21 +1,22 @@
 import { DOCUMENT } from '@angular/common';
 import { afterNextRender, Component, computed, ElementRef, inject, signal, viewChild } from '@angular/core';
 import { TranslocoPipe } from '@jsverse/transloco';
-import { ScoreSession } from './score-session.js';
-import { AppHeader } from './layout/app-header.js';
-import { LibraryPanel } from './layout/library-panel.js';
-import { TracksPanel } from './layout/tracks-panel.js';
-import { TransportBar } from './layout/transport-bar.js';
-import { SettingsPanel } from './layout/settings-panel.js';
-import { sections } from './layout/navigation.js';
-import type { Section } from './layout/navigation.js';
-import { ScoreViewer } from './viewer/score-viewer.js';
-import { Icon } from './shared/icon.js';
+import { ScoreSession } from '../score-session.js';
+import { AppHeader } from '../layout/app-header/app-header.js';
+import { LibraryPanel } from '../layout/library-panel/library-panel.js';
+import { TracksPanel } from '../layout/tracks-panel/tracks-panel.js';
+import { TransportBar } from '../layout/transport-bar/transport-bar.js';
+import { SettingsPanel } from '../layout/settings-panel/settings-panel.js';
+import { sections } from '../layout/navigation.js';
+import type { Section } from '../layout/navigation.js';
+import { ScoreViewer } from '../viewer/score-viewer/score-viewer.js';
+import { Icon } from '../shared/icon/icon.js';
 
 @Component({
   selector: 'gp-app',
   imports: [TranslocoPipe, AppHeader, LibraryPanel, TracksPanel, TransportBar, SettingsPanel, ScoreViewer, Icon],
   templateUrl: './app.html',
+  styleUrl: './app.css',
 })
 export class App {
   readonly session = inject(ScoreSession);

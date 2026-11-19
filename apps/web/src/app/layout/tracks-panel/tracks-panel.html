@@ -1,12 +1,4 @@
-import { Component, input, output } from '@angular/core';
-import { initialMixerState } from '@guitar-practice/core';
-import type { MixerState, ScoreSummary } from '@guitar-practice/core';
-import { TranslocoPipe } from '@jsverse/transloco';
-import { Icon } from '../shared/icon.js';
 
-@Component({
-  selector: 'gp-tracks-panel', imports: [TranslocoPipe, Icon],
-  template: `
     <aside class="side-panel tracks-panel" [class.collapsed]="collapsed()" [attr.aria-label]="'shell.tracksPanel' | transloco">
       <div class="panel-top"><h3><gp-icon name="tracks" /><span>{{ 'score.trackList' | transloco }}</span></h3>
         <button class="icon-button" type="button" [attr.aria-label]="(collapsed() ? 'shell.expandTracks' : 'shell.collapseTracks') | transloco"
@@ -41,16 +33,4 @@ import { Icon } from '../shared/icon.js';
           <p class="panel-hint">{{ (mixer().available ? 'mixer.hint' : 'mixer.waiting') | transloco }}</p>
         } @else { <p class="empty-panel">{{ 'shell.noTracks' | transloco }}</p> }
       </div>
-    </aside>`,
-})
-export class TracksPanel {
-  readonly tracks = input<ScoreSummary['tracks']>([]);
-  readonly mixer = input<MixerState>(initialMixerState());
-  readonly collapsed = input(false);
-  readonly toggle = output<void>();
-  readonly mute = output<number>();
-  readonly solo = output<number>();
-  readonly volumeChange = output<{ index: number; volume: number }>();
-  trackState(index: number) { return this.mixer().tracks.find((track) => track.index === index); }
-  percent(value: number): number { return Math.round(value * 100); }
-}
+    </aside>

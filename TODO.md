@@ -1,5 +1,14 @@
 # Guitar Tab Trainer — TODO
 
+## Refactoring strutturale Angular
+
+- [x] Organizzare i nove componenti in cartelle dedicate con TypeScript, HTML e CSS.
+- [x] Aggiornare import e convenzione in AGENTS.md, poi verificare la compilazione.
+
+Build Angular, typecheck e controllo dei confini passati. Verifica dei contenuti
+estratti completata per tutti i nove componenti.
+
+
 ## Consolidamento M4 — 19 novembre 2026
 
 Perimetro autorizzato: analisi, correzioni circoscritte e test selettivi.

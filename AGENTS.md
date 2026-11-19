@@ -24,6 +24,14 @@ Development environment: Debian WSL2.
 7. Keep original Guitar Pro files unchanged.
 8. Design for offline operation.
 
+## Angular component layout
+
+Give each Angular component its own directory with matching TypeScript, HTML
+and CSS or SCSS files. Reference the template and stylesheet with
+`templateUrl` and `styleUrl` (or `styleUrls` for multiple stylesheets).
+Keep templates and styles out of component decorators. Keep shared and global
+styles in the application stylesheet.
+
 ## Development workflow
 
 Follow these distinct phases:

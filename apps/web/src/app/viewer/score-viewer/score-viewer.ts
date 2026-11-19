@@ -2,13 +2,14 @@ import { DOCUMENT } from '@angular/common';
 import { afterNextRender, Component, DestroyRef, ElementRef, inject, output, signal, viewChild } from '@angular/core';
 import type { ScoreViewMode } from '@guitar-practice/alphatab-adapter';
 import { TranslocoPipe } from '@jsverse/transloco';
-import { ScoreSession } from '../score-session.js';
-import { Icon } from '../shared/icon.js';
-import { SongInfo } from './song-info.js';
+import { ScoreSession } from '../../score-session.js';
+import { Icon } from '../../shared/icon/icon.js';
+import { SongInfo } from '../song-info/song-info.js';
 
 @Component({
   selector: 'gp-score-viewer', imports: [TranslocoPipe, Icon, SongInfo],
   templateUrl: './score-viewer.html',
+  styleUrl: './score-viewer.css',
 })
 export class ScoreViewer {
   readonly session = inject(ScoreSession);

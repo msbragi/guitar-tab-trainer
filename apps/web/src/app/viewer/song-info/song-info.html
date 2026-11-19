@@ -1,11 +1,4 @@
-import { Component, input } from '@angular/core';
-import type { ScoreState } from '@guitar-practice/core';
-import { TranslocoPipe } from '@jsverse/transloco';
-import { Icon } from '../shared/icon.js';
-
-@Component({
-  selector: 'gp-song-info', imports: [TranslocoPipe, Icon],
-  template: `@let current = state();
+@let current = state();
     @if (current.status === 'ready') {
       <section class="song-info" [attr.aria-label]="'score.info' | transloco">
         <div class="song-art" aria-hidden="true"><gp-icon name="music" /></div>
@@ -17,6 +10,4 @@ import { Icon } from '../shared/icon.js';
       </section>
     } @else {
       <div class="practice-heading"><div><p class="eyebrow">{{ 'app.eyebrow' | transloco }}</p><h2>{{ 'shell.practiceTitle' | transloco }}</h2></div><span class="local-badge"><span class="status-dot"></span>{{ 'footer.local' | transloco }}</span></div>
-    }`,
-})
-export class SongInfo { readonly state = input<ScoreState>({ status: 'idle' }); }
+    }

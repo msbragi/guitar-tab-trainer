@@ -27,8 +27,8 @@ export type IconName = keyof typeof paths;
 @Component({
   selector: 'gp-icon',
   host: { 'aria-hidden': 'true' },
-  template: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" focusable="false"><path [attr.d]="paths[name()]"/></svg>',
-  styles: ':host{display:inline-flex;width:1.25em;height:1.25em;flex-shrink:0}svg{width:100%;height:100%}',
+  templateUrl: './icon.html',
+  styleUrl: './icon.css',
 })
 export class Icon {
   readonly name = input<IconName>('music');
