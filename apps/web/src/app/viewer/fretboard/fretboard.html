@@ -1,15 +1,51 @@
 <div class="fretboard-controls">
-  <label for="fretboard-track">{{ 'fretboard.track' | transloco }}</label>
-  <select id="fretboard-track" #track (change)="requestedTrack.set(+track.value)">
-    @for (item of tracks(); track item.index) {
-      <option [value]="item.index" [selected]="item.index === selectedTrack()">{{ item.name || (item.index + 1) }}</option>
+  <div class="fretboard-track-controls">
+    <label for="fretboard-track">{{ 'fretboard.track' | transloco }}</label>
+    <select id="fretboard-track" #track (change)="requestedTrack.set(+track.value)">
+      @for (item of tracks(); track item.index) {
+        <option [value]="item.index" [selected]="item.index === selectedTrack()">{{ item.name || (item.index + 1) }}</option>
+      }
+    </select>
+    @if (frame(); as current) {
+      @if (current.capo > 0) {
+        <span>{{ 'fretboard.capo' | transloco: { fret: current.capo } }}</span>
+      }
     }
-  </select>
-  @if (frame(); as current) {
-    @if (current.capo > 0) {
-      <span>{{ 'fretboard.capo' | transloco: { fret: current.capo } }}</span>
+  </div>
+  <div class="effect-status">
+    @if (effectPositions().length) {
+      <ul class="effect-details" [attr.aria-label]="'fretboard.effects.title' | transloco">
+        @for (position of effectPositions(); track position.string + ':' + position.fret) {
+          @for (effect of position.effects; track $index) {
+            <li [attr.data-effect]="effect.kind">
+              <span class="effect-position">{{ 'fretboard.effects.position' | transloco: { string: position.string, fret: position.fret } }}</span>
+              <span>{{ effectSymbol(effect) }}</span>
+              @switch (effect.kind) {
+                @case ('bend') {
+                  <span>{{ 'fretboard.effects.bend' | transloco }} {{ effect.tones.join(' → ') }} {{ 'fretboard.effects.tones' | transloco }}</span>
+                }
+                @case ('vibrato') {
+                  <span>{{ (effect.wide ? 'fretboard.effects.vibratoWide' : 'fretboard.effects.vibrato') | transloco }}</span>
+                }
+                @case ('hammer-on') {
+                  <span>{{ 'fretboard.effects.hammerOn' | transloco }} {{ effect.sourceFret }} → {{ effect.targetFret }}</span>
+                }
+                @case ('pull-off') {
+                  <span>{{ 'fretboard.effects.pullOff' | transloco }} {{ effect.sourceFret }} → {{ effect.targetFret }}</span>
+                }
+                @case ('slide') {
+                  <span>{{ (effect.pick ? 'fretboard.effects.pickSlide' : effect.legato ? 'fretboard.effects.legatoSlide' : 'fretboard.effects.slide') | transloco }}
+                    {{ (effect.phase === 'in' ? 'fretboard.effects.in' : 'fretboard.effects.out') | transloco }}
+                    @if (effect.targetFret !== undefined) { → {{ effect.targetFret }} }
+                  </span>
+                }
+              }
+            </li>
+          }
+        }
+      </ul>
     }
-  }
+  </div>
 </div>
 @if (frame(); as current) {
   <div class="fretboard-scroll" tabindex="0" role="region" [attr.aria-label]="'fretboard.title' | transloco">
@@ -74,38 +110,6 @@
     }
     </div>
   </div>
-  @if (effectPositions().length) {
-    <ul class="effect-details" [attr.aria-label]="'fretboard.effects.title' | transloco">
-      @for (position of effectPositions(); track position.string + ':' + position.fret) {
-        @for (effect of position.effects; track $index) {
-          <li [attr.data-effect]="effect.kind">
-            <span class="effect-position">{{ 'fretboard.effects.position' | transloco: { string: position.string, fret: position.fret } }}</span>
-            <span>{{ effectSymbol(effect) }}</span>
-            @switch (effect.kind) {
-              @case ('bend') {
-                <span>{{ 'fretboard.effects.bend' | transloco }} {{ effect.tones.join(' → ') }} {{ 'fretboard.effects.tones' | transloco }}</span>
-              }
-              @case ('vibrato') {
-                <span>{{ (effect.wide ? 'fretboard.effects.vibratoWide' : 'fretboard.effects.vibrato') | transloco }}</span>
-              }
-              @case ('hammer-on') {
-                <span>{{ 'fretboard.effects.hammerOn' | transloco }} {{ effect.sourceFret }} → {{ effect.targetFret }}</span>
-              }
-              @case ('pull-off') {
-                <span>{{ 'fretboard.effects.pullOff' | transloco }} {{ effect.sourceFret }} → {{ effect.targetFret }}</span>
-              }
-              @case ('slide') {
-                <span>{{ (effect.pick ? 'fretboard.effects.pickSlide' : effect.legato ? 'fretboard.effects.legatoSlide' : 'fretboard.effects.slide') | transloco }}
-                  {{ (effect.phase === 'in' ? 'fretboard.effects.in' : 'fretboard.effects.out') | transloco }}
-                  @if (effect.targetFret !== undefined) { → {{ effect.targetFret }} }
-                </span>
-              }
-            }
-          </li>
-        }
-      }
-    </ul>
-  }
 } @else {
   <p>{{ 'fretboard.unavailable' | transloco }}</p>
 }

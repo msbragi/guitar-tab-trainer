@@ -1,6 +1,8 @@
 :host { display: block; padding: 0 12px 10px; }
 .fretboard-controls { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; margin-bottom: 6px; }
+.fretboard-track-controls { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; max-width: 100%; }
 .fretboard-controls select { max-width: min(100%, 18rem); }
+.effect-status { flex: 1 1 16rem; min-width: 0; height: 2rem; overflow: hidden; }
 .fretboard-scroll { overflow: auto; max-height: min(25dvh, 14rem); }
 .fretboard-surface { position: relative; }
 table { border-collapse: separate; border-spacing: 0; width: 100%; text-align: center; table-layout: fixed; }
@@ -71,8 +73,8 @@ td.nut { border-right: 3px solid var(--muted); }
   font-size: 9px;
   line-height: 1;
 }
-.effect-details { display: flex; flex-wrap: wrap; gap: 3px 12px; padding: 4px 0 0; margin: 0; list-style: none; font-size: 11px; max-height: 4rem; overflow: auto; }
-.effect-details li { display: flex; align-items: baseline; gap: 4px; }
+.effect-details { display: flex; align-items: center; gap: 12px; height: 100%; padding: 0; margin: 0; list-style: none; font-size: 11px; overflow: auto; white-space: nowrap; }
+.effect-details li { display: flex; flex: 0 0 auto; align-items: baseline; gap: 4px; }
 .effect-position { color: var(--muted); }
 .gesture-overlay { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 1; overflow: visible; }
 .gesture-overlay path { fill: none; vector-effect: non-scaling-stroke; stroke-linecap: round; stroke-linejoin: round; }

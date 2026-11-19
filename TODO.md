@@ -25,6 +25,8 @@ Questo file contiene la roadmap attiva. Lo storico essenziale è in
 - [x] Riorganizzazione dei componenti Angular in cartelle con TS, HTML e CSS separati.
 - [ ] Rifinire la resa e verificare manualmente articolazioni, ascolto e comportamento sui GP dell'utente.
 - [ ] Chiarire i debiti di fixture/test browser e i limiti residui elencati in [M4_PLAYBACK.md](docs/M4_PLAYBACK.md).
+- [x] Spostare i dettagli delle articolazioni accanto al selettore traccia (sopra la tastiera su spazi stretti), con altezza riservata anche senza effetti. Build passata.
+- [ ] Verificare nel browser che le transizioni dei dettagli non spostino la fretboard.
 
 L'utente ha confermato il ripristino dopo refresh e il funzionamento degli
 archi H/P. Questi riscontri coesistono con i debiti automatici documentati.
