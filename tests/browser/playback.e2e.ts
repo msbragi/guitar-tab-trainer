@@ -15,7 +15,7 @@ async function open(page: Page, file = 'tests/fixtures/alphatab/effects.gp') {
 async function seek(page: Page, value: number) {
   await page.getByLabel('Playback timeline').evaluate((element, value) => {
     (element as HTMLInputElement).value = String(value);
-    element.dispatchEvent(new Event('change', { bubbles: true }));
+    element.dispatchEvent(new Event('input', { bubbles: true }));
   }, value);
 }
 

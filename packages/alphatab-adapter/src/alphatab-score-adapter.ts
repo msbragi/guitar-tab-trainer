@@ -1,4 +1,5 @@
 import { AlphaTabApi, PlayerMode, synth } from '@coderline/alphatab';
+import type { model } from '@coderline/alphatab';
 import type { ScoreLoader, ScoreSummary, TransportEvent, TransportPort, MixerPort, MixerEvent } from '@guitar-practice/core';
 import { ScoreLoadError } from '@guitar-practice/core';
 import { parseScore } from './parse-score.js';
@@ -110,9 +111,23 @@ export class AlphaTabScoreAdapter implements ScoreLoader, TransportPort, MixerPo
     this.emit({ type: 'preparing' });
     const generation = this.generation;
     const active = () => this.api === api && generation === this.generation && !this.destroyed;
+    let scrollFrame: number | undefined;
     const position = (event: { currentTick: number; endTick: number; currentTime: number; endTime: number; modifiedTempo: number; isSeek: boolean }) => {
       if (active()) this.emit({ type: 'position', isSeek: event.isSeek, position: { tick: event.currentTick, endTick: event.endTick,
         timeMs: event.currentTime, durationMs: event.endTime, tempo: event.modifiedTempo } });
+      // alphaTab accoda due passaggi visivi: scorrere dopo il posizionamento del cursore.
+      if (active() && event.isSeek) {
+        if (scrollFrame !== undefined) cancelAnimationFrame(scrollFrame);
+        scrollFrame = requestAnimationFrame(() => {
+          scrollFrame = requestAnimationFrame(() => {
+            scrollFrame = undefined;
+            if (active()) api.scrollToCursor();
+          });
+        });
+      }
+    };
+    const seekToBeat = (beat: model.Beat) => {
+      if (active() && api.tickCache) this.emit({ type: 'seek-request', tick: api.tickCache.getBeatStart(beat) });
     };
     const ready = () => {
       if (!active()) return;
@@ -144,9 +159,12 @@ export class AlphaTabScoreAdapter implements ScoreLoader, TransportPort, MixerPo
     }, 30_000);
     this.audioCleanup = () => {
       clearTimeout(timeout);
+      if (scrollFrame !== undefined) cancelAnimationFrame(scrollFrame);
+      api.beatMouseDown.off(seekToBeat);
       api.playerReady.off(ready); api.playerPositionChanged.off(position);
       api.playerStateChanged.off(state); api.error.off(failed);
     };
+    api.beatMouseDown.on(seekToBeat);
     api.playerPositionChanged.on(position); api.playerStateChanged.on(state);
     api.playerReady.on(ready); api.error.on(failed);
     try {
@@ -154,7 +172,9 @@ export class AlphaTabScoreAdapter implements ScoreLoader, TransportPort, MixerPo
       api.settings.core.scriptFile = audio.scriptFile;
       api.settings.player.soundFont = audio.soundFont;
       api.settings.player.scrollElement = audio.scrollElement;
-      api.settings.player.enableUserInteraction = false;
+      api.settings.player.enableSeekToClick = false;
+      api.settings.player.enablePlaybackRangeSelection = false;
+      api.settings.player.resetPlaybackRangeOnClick = false;
       api.settings.player.playerMode = PlayerMode.EnabledSynthesizer;
       api.updateSettings();
       if (api.isReadyForPlayback) ready();

@@ -21,6 +21,7 @@ export interface TransportState extends TransportPosition {
 
 export type TransportEvent =
   | { readonly type: 'preparing' | 'reset' | 'ready' }
+  | { readonly type: 'seek-request'; readonly tick: number }
   | { readonly type: 'position'; readonly position: TransportPosition; readonly isSeek: boolean }
   | { readonly type: 'state'; readonly status: 'playing' | 'paused' | 'stopped' }
   | { readonly type: 'error'; readonly error: TransportError };
@@ -118,6 +119,7 @@ export class TransportController {
       case 'ready':
         if (this.current.status === 'preparing') this.patch({ status: 'stopped', a: 0, b: this.current.endTick });
         break;
+      case 'seek-request': this.seek(event.tick); break;
       case 'position':
         // Notifiche di campioni già in volo possono arrivare dopo pausa/stop.
         // Da fermi si accettano soltanto posizionamenti espliciti del player.

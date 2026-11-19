@@ -1,11 +1,55 @@
 # Guitar Tab Trainer — TODO
 
+## Consolidamento M4 — 19 novembre 2026
+
+Perimetro autorizzato: analisi, correzioni circoscritte e test selettivi.
+Nessuna modifica M5, dipendenza, clock, commit/push o arresto del server utente.
+TODO preesistente modificato dall'utente: conservare le note precedenti.
+
+- [x] Analizzare adapter, core, sessione Angular e API pubbliche alphaTab 1.9 installate.
+- [x] Distinguere richiesta utente di seek dagli eventi automatici; applicare i limiti A/B nel core.
+- [x] Verificare cursore e scorrimento dopo seek da fermo, senza comandi ricorsivi.
+- [x] Ripristinare vista, zoom, velocità e master; conservare tema/lingua esistenti.
+- [x] Approvare la copia corrente in IndexedDB: autorizzata dall'utente, senza autoplay e senza progetti/cronologia/sessioni salvate.
+- [x] Implementare store web con byte originali e snapshot separato, sostituzione atomica e fallback su errori.
+- [x] Ripristinare posizione, A/B, velocità, vista/zoom e mixer tramite controller pronti, senza Play.
+- [x] Verificare refresh, scritture tardive/cambio file, storage bloccato/corrotto e aggiornare gli esiti M4.
+- [x] Eseguire test selettivi e aggiornare M4 con risultati e limiti effettivi.
+
+Risultati finali: build, typecheck e confini passati; **36 test Node selettivi
+in 7 file** e **5 scenari Chromium in 32,6 s** passati sulla build di
+produzione, server isolato 4173. Verificati refresh anche durante il playback
+senza autoplay, posizione/range/preferenze/mixer, byte identici all'originale,
+reset al nuovo GP, scritture di schede vecchie, stato corrotto, storage negato,
+quota e caricamento invalido. Test inizialmente corretti per arrotondamento
+player (tolleranza M4 di 2 tick) e per attesa audio prima del seek.
+Nessuna suite browser completa rieseguita; i quattro debiti storici restano
+aperti. Ascolto e validazione manuale sui file/dispositivi dell'utente ancora
+necessari. La sola copia corrente in IndexedDB non è un backup: salvataggi
+di stato accorpati a 500 ms e flush finale best effort, dati per origine
+(browser/profilo/porta), ultimo caricamento riuscito prevalente tra schede.
+Progetti, cronologia e sessioni salvate restano decisioni future separate.
+
+Soluzione sync: evento neutrale `seek-request` dal beat cliccato, convertito
+tramite tickCache pubblico; eventi di posizione restano notifiche. Il player
+aggiorna già i cursori sui seek, ma da fermo non richiede lo scorrimento:
+usare `scrollToCursor` dopo aggiornamento confermato (verificato in Chromium).
+Rischi: eventi tardivi, ripetizioni (click sulla prima occorrenza), loop B
+esclusivo, rendering/cambio file, storage non disponibile.
+
 ## Stato corrente — chiusura operativa M4, 16 novembre 2026
 
 M0–M4 implementate, inclusi feedback visivo, Track Mixer, tooltip EN/IT e
 trasporto compatto. Dopo prova manuale l'utente ha riferito «It seems all ok»
 e chiesto di preparare la ripartenza **M5**. M4 è la baseline accettata per
 l'analisi M5; il riscontro generale non certifica ogni caso specialistico.
+
+---
+Ci sono un po'di ocse da migliorare decidimao se farlo prima di M5 o lo rimandiamo:
+1. Quando si fa efresh della pagina mantenere lo stato (tablatura e posizione se possibile)
+2. Sincronizzare la barra di progressione di play con la vista della tablatura in tempo reale
+3. La stessa cosa all'inverso deve avvenire facendo click sulla tablatura in una posizione (altrimenti impostare un loop diventa difficilissimo)
+---
 
 M5 non implementata. Ripartire da [docs/SESSION_HANDOFF.md](docs/SESSION_HANDOFF.md)
 e [docs/M5_START.md](docs/M5_START.md), che contiene il prompt della prossima sessione.

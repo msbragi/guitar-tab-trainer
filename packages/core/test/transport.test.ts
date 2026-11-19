@@ -135,3 +135,14 @@ describe('trasporto autorevole nel core', () => {
     expect(() => controller.subscribe(listener)).toThrow('session-closed');
   });
 });
+
+it('instrada soltanto richieste esplicite e applica A/B senza ricorsione', () => {
+  const { port, controller } = setup();
+  controller.setPoint('a', 200); controller.setPoint('b', 700); controller.toggleLoop();
+  port.emit({ type: 'seek-request', tick: 700 }); expect(port.seek).toHaveBeenLastCalledWith(200);
+  port.position(200); expect(port.seek).toHaveBeenCalledOnce();
+  port.emit({ type: 'seek-request', tick: 500 }); expect(port.seek).toHaveBeenLastCalledWith(500);
+  port.position(500); expect(port.seek).toHaveBeenCalledTimes(2);
+  port.emit({ type: 'reset' }); port.emit({ type: 'seek-request', tick: 500 });
+  expect(port.seek).toHaveBeenCalledTimes(2);
+});

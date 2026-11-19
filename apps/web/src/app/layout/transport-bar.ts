@@ -23,7 +23,7 @@ import { ScoreSession } from '../score-session.js';
         </div>
         <div class="timeline"><span>{{ time(state().timeMs) }} / {{ time(state().durationMs) }}</span>
           <input #timeline type="range" min="0" [max]="state().endTick || 1" step="1" [value]="state().tick"
-            (change)="session.seek(+timeline.value)" [title]="'transport.timeline' | transloco" [attr.aria-label]="'transport.timeline' | transloco"></div>
+            (input)="session.seek(+timeline.value)" [title]="'transport.timeline' | transloco" [attr.aria-label]="'transport.timeline' | transloco"></div>
         <div class="loop-controls" aria-describedby="loop-help">
           <button class="control-button" type="button" (click)="session.toggleLoop()" [attr.aria-pressed]="state().loop"
             [title]="'transport.loop' | transloco" [attr.aria-label]="'transport.loop' | transloco"><gp-icon name="loop" /></button>

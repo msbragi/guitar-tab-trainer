@@ -200,3 +200,150 @@ Checklist specialistica aggiuntiva (il riscontro manuale generale è già positi
   verificare leggibilità e comodità della barra su schermi piccoli.
 
 M5 non avviata. Nessuna nuova dipendenza, routing, backing o Audio Engine.
+
+## Consolidamento — 19 novembre 2026
+
+Analisi: `enableUserInteraction = false` disabilitava il seek sullo score.
+Nella versione **1.9.0 installata**, `beatMouseDown`, `tickCache.getBeatStart`,
+`enableSeekToClick`, `enablePlaybackRangeSelection`,
+`resetPlaybackRangeOnClick` e `scrollToCursor` sono API pubbliche disponibili.
+Riferimenti: [eventi beat](https://alphatab.net/docs/reference/api/beatmousedown/),
+[interazione](https://alphatab.net/docs/features/interact/enabling-and-disabling-interaction/),
+[scorrimento](https://alphatab.net/docs/reference/api/scrolltocursor/).
+La verifica sui tipi e sul codice distribuito della 1.9 evita di assumere
+che tutte le funzionalità del sito corrente appartengano a questa release.
+Nessun file della libreria è stato modificato.
+
+Il player aggiorna il cursore anche sui seek da fermo, ma non richiede lo
+scorrimento automatico alla nuova battuta fino al playback. L'adapter ora
+richiede `scrollToCursor` dopo l'aggiornamento visivo di un seek confermato.
+La timeline usa `input` per inviare il seek durante il trascinamento.
+Le richieste di frame sono accorpate e cancellate al reset; non rappresentano
+un clock musicale e non inviano comandi di trasporto.
+
+Il click su un beat/nota genera `seek-request` in tick nel port del core.
+Il controller applica le stesse regole di validazione e A/B della timeline;
+le notifiche `position` non diventano comandi. L'interazione nativa di seek
+e selezione range rimane disabilitata per evitare un secondo percorso di
+comando che aggiri il controller. Il click usa la **prima occorrenza** del beat
+nella sequenza eseguita (`getBeatStart`); non seleziona una ripetizione successiva.
+Il bordo B resta esclusivo; clic fuori range mantiene i limiti del core.
+Non si avvia audio cliccando da fermo.
+
+Preferenze web leggere in localStorage con schema validato: vista, zoom,
+velocità e master. Lingua e tema mantengono i loro meccanismi esistenti.
+Velocità e master sono ripristinati sul primo documento dopo refresh, alla
+disponibilità dei rispettivi controller; un successivo nuovo file mantiene
+il reset M4. Vista e zoom si conservano tra file. Storage assente, corrotto
+o bloccato non impedisce caricamento e playback. Non si scrive nello storage
+a ogni aggiornamento di posizione: vengono salvate soltanto preferenze cambiate.
+
+### Ultima tablatura in IndexedDB — decisione approvata
+
+L'utente ha approvato il recupero automatico del solo file corrente e del
+relativo stato M4, senza autoplay. La gestione di progetti, cronologia e
+sessioni salvate sarà decisa separatamente con lo storage più appropriato.
+Questo intervento non sceglie né anticipa filesystem/SQLite per tali funzioni.
+
+- `apps/web/src/app/current-session-store.ts`: IndexedDB nativo, database
+  `guitar-practice.current-session` versione 1, object store `current`.
+  Contiene soltanto `file` (identificatore, nome, byte originali Uint8Array)
+  e `state` (stesso identificatore e snapshot). La sostituzione dei due record
+  è atomica e avviene dopo il caricamento riuscito, anche in un recupero.
+- `current-session-state.ts`: validazione dello snapshot e applicazione dei
+  comandi pubblici di `TransportController` e `MixerController`. Nessun
+  modello alphaTab serializzato, tipo della libreria nel core o stato
+  `playing` persistito. Millisecondi, durata e tempo sono ricalcolati dal player.
+- `ScoreSession`: composizione e lifecycle web; mantiene separati recupero,
+  caricamento e disponibilità audio. Trasporto e mixer vengono applicati
+  una sola volta quando i rispettivi controller sono pronti. Il recupero
+  asincrono ancora in lettura non prevale su un'apertura esplicita o un detach.
+
+Dopo refresh vengono ripristinati GP, posizione in tick, A/B e attivazione
+loop, velocità, modalità/zoom, master, mute/solo e volumi delle tracce.
+Non viene chiamato Play. Il seek rispetta i limiti del core e il bordo B
+esclusivo; range oltre la durata effettiva ignorati, indici traccia sconosciuti
+ignorati e controlli collegati mantenuti coerenti.
+
+I byte originali non vengono riscritti sul disco né salvati a ogni tick.
+Durante il playback si accorpano le scritture del solo stato con un timeout
+I/O di 500 ms; `pagehide` e passaggio della pagina in background tentano un
+flush aggiuntivo. Nessun clock musicale nuovo. Una chiusura improvvisa o il
+browser che sospende l'I/O può perdere gli ultimi aggiornamenti; non è una
+persistenza sample-accurate. Un documento successivo mantiene i reset M4 di
+velocità e mixer e sostituisce la sola copia corrente, senza cronologia.
+
+Errori, quota o IndexedDB non disponibile non impediscono di caricare e
+usare il documento; l'apertura dello storage ha un limite di 1,5 secondi.
+Una sostituzione fallita conserva la precedente copia valida, che potrà
+quindi riapparire al refresh. Snapshot corrotti o non associati al file
+vengono ignorati; il GP valido si riapre con le preferenze leggere/default.
+Un GP non leggibile nello storage mostra il normale errore di caricamento:
+è possibile riselezionare un file. Nessuna richiesta di permessi filesystem.
+
+I dati sono specifici di browser/profilo/origine (anche porta) e cancellabili
+dal browser; non sono una libreria musicale o un backup. Fra più schede
+prevale l'ultimo caricamento riuscito; le altre non si aggiornano dal vivo.
+L'identificatore impedisce che le loro scritture tardive modifichino lo stato
+del nuovo GP. Nessuna nuova dipendenza o promessa di accesso permanente al
+disco. Lo storage non rende l'app una PWA né garantisce l'avvio offline.
+
+### Verifiche prima dell’approvazione IndexedDB (storiche)
+
+- Build, typecheck e controllo dei confini passati.
+- **29 test Node selettivi, 5 file**, passati: trasporto core, mixer core,
+  trasporto adapter, lifecycle adapter e validazione/fallback preferenze.
+- **2 scenari Chromium, 24,3 s**, passati sulla build di produzione con
+  server isolato 4173: seek tramite `input` da fermo e cursore in viewport;
+  click su beat/nota, clamp A/B, pausa, seek da pausa, stop al punto A;
+  cambio modalità/zoom senza perdita della posizione; preferenze dopo
+  refresh e riselezione manuale del GP, player fermo; reset di velocità e
+  master al documento successivo, anche nelle preferenze persistite.
+- Il primo tentativo completo aveva 1 passato e 1 fallito: il click del test
+  sul primo gruppo SVG era intercettato da una dinamica. Selezionato un beat
+  precedente ad A senza sovrapposizione; entrambi gli scenari poi passati.
+  Un'ulteriore esecuzione è stata interrotta dal riavvio dell'ambiente e non
+  è conteggiata come esito.
+
+Non rieseguita la suite browser completa: restano aperti i quattro debiti
+storici di mixer/fixture/responsive riportati sopra. Nessun ascolto umano
+eseguito in questo intervento. Verificare manualmente trascinamento continuo,
+click sul proprio GP, ripetizioni, A/B, cambio velocità e mixer durante il
+suono; touch e altri browser non certificati. In questa prima fase il test di refresh prevedeva ancora la riselezione
+manuale del GP; è stato poi esteso al recupero IndexedDB descritto sopra.
+Nessun clock, motore, backend, dipendenza, modifica M5 o commit/push aggiunto;
+il server di sviluppo dell'utente non è stato interrotto.
+
+
+### Verifiche finali dopo l’approvazione IndexedDB
+
+- Build, typecheck, controllo dei confini e `git diff --check` passati.
+- **36 test Node selettivi in 7 file passati**: suite trasporto/mixer/lifecycle
+  precedenti più validazione e ripristino snapshot, bordo B esclusivo,
+  range oltre la durata, mixer con tracce collegate, storage negato/assente,
+  apertura bloccata/timeout e chiusura durante apertura.
+- **5 scenari Chromium passati in 32,6 s**, su build di produzione e server
+  isolato 4173: sincronizzazione già descritta; riapertura automatica senza
+  riselezione del GP; ripristino esatto di A/B, velocità, vista/zoom e mixer;
+  posizione confermata con la tolleranza M4 di **2 tick**; refresh durante
+  playback con riavvio fermo; byte salvati identici ai fixture originali;
+  reset al documento successivo; apertura manuale con IndexedDB negato;
+  sostituzione atomica e protezione contro scritture di schede vecchie;
+  snapshot associato ma corrotto ignorato; quota simulata durante il secondo
+  `put` con rollback della transazione; GP invalido che conserva l'ultima
+  copia valida e successivo recupero al refresh.
+
+I primi tentativi IndexedDB avevano asserzioni esatte sui tick (il player
+restituiva +1 tick) e un seek nel test a due schede prima della disponibilità
+audio. Corrette le aspettative con la tolleranza M4 già esistente e aggiunta
+l'attesa del trasporto pronto; l'ultima esecuzione dei cinque scenari è verde.
+Nessuna modifica alla libreria necessaria. Questi risultati sostituiscono
+quelli della prima fase di consolidamento, senza cancellare i quattro debiti
+browser storici (fixture/mixer e responsive) non rieseguiti in questo lavoro.
+
+Validazione manuale ancora richiesta: usare il proprio GP, regolare A/B,
+velocità e mixer, provare Ctrl+R sia da fermo sia durante il suono e verificare
+posizione/cursore e assenza di audio fino a Play. L'ascolto fisico e la qualità
+musicale, touch, altri browser e stress su partiture grandi non sono stati
+certificati da queste prove. Nessun commit/push, modifica M5 o arresto del
+server di sviluppo dell'utente; nessuna dipendenza o clock musicale aggiunto.

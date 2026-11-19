@@ -11,6 +11,9 @@ const fake = vi.hoisted(() => {
   }
   const instances: Api[] = [];
   class Api {
+    beatMouseDown = new Events<model.Beat>();
+    scrollToCursor = vi.fn();
+    tickCache = { getBeatStart: vi.fn(() => 1920) };
     postRenderFinished = new Events(); error = new Events(); playerReady = new Events();
     playerStateChanged = new Events<{ state: number; stopped: boolean }>();
     playerPositionChanged = new Events<{ currentTick: number; endTick: number; currentTime: number; endTime: number; modifiedTempo: number; isSeek: boolean }>();
@@ -38,15 +41,15 @@ function setup() {
   return { adapter, events };
 }
 const latest = () => fake.instances.at(-1)!;
-beforeEach(() => { fake.instances.length = 0; vi.useFakeTimers(); });
-afterEach(() => { vi.useRealTimers(); });
+beforeEach(() => { fake.instances.length = 0; vi.useFakeTimers(); vi.stubGlobal('requestAnimationFrame', (fn: () => void) => setTimeout(fn, 16)); vi.stubGlobal('cancelAnimationFrame', clearTimeout); });
+afterEach(() => { vi.useRealTimers(); vi.unstubAllGlobals(); });
 
 describe('port playback alphaTab', () => {
   it('prepara audio dopo rendering, forza il synth e converte eventi senza esporre modelli', async () => {
     const { adapter, events } = setup(); const load = adapter.load(bytes()); const api = latest();
     expect(api.updateSettings).not.toHaveBeenCalled();
     api.postRenderFinished.emit(); await load;
-    expect(api.settings.player).toMatchObject({ playerMode: 2, soundFont: '/sonivox.sf2', enableUserInteraction: false });
+    expect(api.settings.player).toMatchObject({ playerMode: 2, soundFont: '/sonivox.sf2', enableSeekToClick: false, enablePlaybackRangeSelection: false, resetPlaybackRangeOnClick: false });
     expect(events.at(-1)).toEqual({ type: 'preparing' });
     api.playerReady.emit(); expect(events.at(-1)).toEqual({ type: 'ready' });
     expect(events.at(-2)).toEqual({ type: 'position', isSeek: true, position: { tick: 0, endTick: 8000, timeMs: 0, durationMs: 5000, tempo: 0 } });
@@ -101,4 +104,22 @@ it('il mixer usa soltanto API pubbliche, riferimenti alle tracce corretti e rese
   expect(() => adapter.setTrackMute([99], true)).toThrow('invalid-track');
   api.error.emit(); expect(events.at(-1)).toEqual({ type: 'unavailable' });
   adapter.reset(); expect(events.at(-1)).toEqual({ type: 'reset' }); adapter.destroy();
+});
+
+it('distingue click da notifiche e scorre dopo il cursore senza inviare altri seek', async () => {
+  const { adapter, events } = setup(); const load = adapter.load(bytes()); const api = latest();
+  api.postRenderFinished.emit(); await load; api.playerReady.emit();
+  await vi.advanceTimersByTimeAsync(32); api.scrollToCursor.mockClear();
+  const beat = api.score!.tracks[0]!.staves[0]!.bars[0]!.voices[0]!.beats[0]!;
+  api.beatMouseDown.emit(beat);
+  expect(events.at(-1)).toEqual({ type: 'seek-request', tick: 1920 });
+  api.playerPositionChanged.emit({ currentTick: 1920, endTick: 8000, currentTime: 1000, endTime: 5000, modifiedTempo: 120, isSeek: true });
+  await vi.advanceTimersByTimeAsync(32); expect(api.scrollToCursor).toHaveBeenCalledOnce();
+  api.playerPositionChanged.emit({ currentTick: 2000, endTick: 8000, currentTime: 1100, endTime: 5000, modifiedTempo: 120, isSeek: false });
+  await vi.advanceTimersByTimeAsync(32); expect(api.scrollToCursor).toHaveBeenCalledOnce();
+  expect(events.filter((e) => e.type === 'seek-request')).toHaveLength(1);
+  api.playerPositionChanged.emit({ currentTick: 3000, endTick: 8000, currentTime: 1500, endTime: 5000, modifiedTempo: 120, isSeek: true });
+  adapter.reset(); await vi.advanceTimersByTimeAsync(32);
+  expect(api.scrollToCursor).toHaveBeenCalledOnce(); expect(api.beatMouseDown.listeners.size).toBe(0);
+  adapter.destroy();
 });
