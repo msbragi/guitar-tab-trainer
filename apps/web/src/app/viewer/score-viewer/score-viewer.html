@@ -6,6 +6,12 @@
         <button type="button" [title]="('viewer.' + mode) | transloco" [attr.aria-pressed]="session.mode() === mode" [disabled]="current.status !== 'ready' || session.viewBusy()"
           (click)="session.setView(mode, session.scale())">{{ ('viewer.' + mode) | transloco }}</button>
       }
+      <button class="practice-toggle" type="button" [disabled]="current.status !== 'ready' || session.viewBusy() || !session.playbackBars().length"
+        [attr.aria-pressed]="session.practiceFlow().phase !== 'idle'"
+        [title]="(session.practiceFlow().phase === 'active' ? 'practice.finish' : session.practiceFlow().phase === 'idle' ? 'practice.launch' : 'practice.cancel') | transloco"
+        (click)="session.practiceFlow().phase === 'idle' ? session.beginPractice() : session.finishPractice()">
+        {{ (session.practiceFlow().phase === 'active' ? 'practice.finish' : session.practiceFlow().phase === 'idle' ? 'practice.launch' : 'practice.cancel') | transloco }}
+      </button>
     </div>
     <div class="view-tools"><div class="zoom-control"><label for="score-zoom" class="visually-hidden">{{ 'viewer.zoom' | transloco }}</label>
       <select [title]="'viewer.zoom' | transloco" id="score-zoom" [value]="session.scale()" [disabled]="current.status !== 'ready' || session.viewBusy()" (change)="zoom($event)">
@@ -16,8 +22,9 @@
         [title]="(!fullscreenAvailable() ? 'viewer.fullscreenUnavailable' : fullscreen() ? 'viewer.exitFullscreen' : 'viewer.fullscreen') | transloco" (click)="toggleFullscreen()"><gp-icon [name]="fullscreen() ? 'collapse' : 'expand'" /></button>
     </div>
   </div>
+  @if (current.status === 'ready') { <gp-practice-panel /> }
   <div class="score-scroll">
-    <div class="status" role="status" aria-live="polite">
+    <div class="status" [class.visually-hidden]="current.status === 'ready' && session.practiceFlow().phase !== 'idle'" role="status" aria-live="polite">
       @switch (current.status) {
         @case ('idle') { <p>{{ 'status.idle' | transloco }}</p> }
         @case ('loading') { <p>{{ 'status.loading' | transloco: { fileName: current.fileName } }}</p> }

@@ -9,6 +9,8 @@ import { configureAudioRuntime } from './browser-audio-runtime.js';
 import { readFretboard } from './fretboard.js';
 import type { FretboardFrame } from './fretboard-frame.js';
 import { describeMixerTracks } from './mixer-tracks.js';
+import { readPlaybackBars } from './playback-bars.js';
+import type { PracticeBarPick } from '@guitar-practice/core';
 
 export interface AlphaTabViewOptions {
   readonly fontDirectory: string;
@@ -27,11 +29,54 @@ export class AlphaTabScoreAdapter implements ScoreLoader, TransportPort, MixerPo
   private audioCleanup: (() => void) | undefined;
   private runtimeCleanup: (() => void) | undefined;
   private readonly mixerListeners = new Set<(event: MixerEvent) => void>();
+  private practicePick: ((pick: PracticeBarPick) => void) | undefined;
+  private practiceTicks: { readonly startTick: number; readonly endTick: number } | null = null;
+  private practiceHighlight: { readonly trackIndex: number; readonly startBar: number; readonly endBar: number } | null = null;
 
   constructor(private readonly host: HTMLElement, private readonly options: AlphaTabViewOptions) {}
 
   fretboardAt(trackIndex: number, tick: number): FretboardFrame | null {
     return this.api ? readFretboard(this.api, trackIndex, tick) : null;
+  }
+
+  playbackBars() { return this.api ? readPlaybackBars(this.api) : []; }
+
+  setPracticePicking(listener: ((pick: PracticeBarPick) => void) | null): void { this.practicePick = listener ?? undefined; }
+
+  setPracticeTicks(range: { readonly startTick: number; readonly endTick: number } | null): void { this.practiceTicks = range; }
+
+  highlightPractice(trackIndex: number, startBar: number, endBar: number): void {
+    this.practiceHighlight = { trackIndex, startBar, endBar };
+    this.applyPracticeHighlight();
+  }
+
+  private applyPracticeHighlight(): void {
+    if (!this.practiceHighlight) return;
+    const { trackIndex, startBar, endBar } = this.practiceHighlight;
+    const api = this.api;
+    const staff = api?.score?.tracks.find(({ index }) => index === trackIndex)?.staves[0];
+    const first = staff?.bars[startBar]?.voices[0]?.beats[0];
+    const last = staff?.bars[endBar]?.voices[0]?.beats.at(-1);
+    if (first && last) api!.highlightPlaybackRange(first, last);
+  }
+
+  clearPracticeHighlight(): void { this.practiceHighlight = null; this.api?.clearPlaybackRangeHighlight(); }
+
+  /** Crop the rendered score only; retain the same musical model, MIDI and player. */
+  async setPracticeView(range: { readonly startBar: number; readonly endBar: number } | null): Promise<void> {
+    const api = this.api;
+    if (!api?.score || this.destroyed) throw new ScoreLoadError('session-closed');
+    if (this.cancel) throw new ScoreLoadError('busy');
+    const previous = { startBar: api.settings.display.startBar, barCount: api.settings.display.barCount };
+    api.settings.display.startBar = range ? range.startBar + 1 : 1;
+    api.settings.display.barCount = range ? range.endBar - range.startBar + 1 : -1;
+    try {
+      api.updateSettings();
+      await this.render(api, () => api.render());
+    } catch (error: unknown) {
+      Object.assign(api.settings.display, previous); api.updateSettings();
+      throw error;
+    }
   }
 
   async load(bytes: Uint8Array): Promise<ScoreSummary> {
@@ -71,12 +116,13 @@ export class AlphaTabScoreAdapter implements ScoreLoader, TransportPort, MixerPo
   stop(): void { this.api?.stop(); }
   seek(tick: number): void { if (this.api) this.api.tickPosition = tick; }
   setSpeed(factor: number): void { if (this.api) this.api.playbackSpeed = factor; }
-  setLoop(range: { readonly startTick: number; readonly endTick: number } | null, tick: number): void {
+  setPlaybackRange(range: { readonly startTick: number; readonly endTick: number } | null, tick: number, looping = true): void {
     if (!this.api) return;
     // Le richieste al worker sono ordinate: range prima, poi posizione da conservare.
-    this.api.isLooping = range !== null;
+    this.api.isLooping = range !== null && looping;
     this.api.playbackRange = range;
     this.api.tickPosition = tick;
+    this.applyPracticeHighlight();
   }
 
   private emit(event: TransportEvent): void {
@@ -133,7 +179,21 @@ export class AlphaTabScoreAdapter implements ScoreLoader, TransportPort, MixerPo
       }
     };
     const seekToBeat = (beat: model.Beat) => {
-      if (active() && api.tickCache) this.emit({ type: 'seek-request', tick: api.tickCache.getBeatStart(beat) });
+      if (!active() || !api.tickCache) return;
+      if (this.practicePick) {
+        this.practicePick({ trackIndex: beat.voice.bar.staff.track.index, barIndex: beat.voice.bar.index });
+        return;
+      }
+      let tick = api.tickCache.getBeatStart(beat);
+      if (this.practiceTicks) {
+        const occurrences = api.tickCache.masterBars.filter(({ masterBar, start, end }) =>
+          masterBar.index === beat.voice.bar.index && start >= this.practiceTicks!.startTick && end <= this.practiceTicks!.endTick);
+        const occurrence = occurrences.find(({ start, end }) => api.tickPosition >= start && api.tickPosition < end) ?? occurrences[0];
+        const relative = api.tickCache.getRelativeBeatPlaybackRange(beat);
+        if (!occurrence || !relative) return;
+        tick = occurrence.start + relative.startTick;
+      }
+      this.emit({ type: 'seek-request', tick });
     };
     const ready = () => {
       if (!active()) return;
@@ -218,7 +278,7 @@ export class AlphaTabScoreAdapter implements ScoreLoader, TransportPort, MixerPo
           api.error.off(failed);
           this.cancel = undefined;
         };
-        const done = () => { cleanup(); resolve(); };
+        const done = () => { cleanup(); this.applyPracticeHighlight(); resolve(); };
         const failed = () => { cleanup(); reject(new ScoreLoadError('render-failed')); };
         const timeout = setTimeout(() => {
           cleanup();
@@ -245,6 +305,7 @@ export class AlphaTabScoreAdapter implements ScoreLoader, TransportPort, MixerPo
   /** Rimuove la vista precedente anche se la lettura del prossimo file fallisce. */
   reset(): void {
     this.generation++;
+    this.practicePick = undefined; this.practiceTicks = null; this.practiceHighlight = null;
     this.cancel?.();
     this.audioCleanup?.();
     this.audioCleanup = undefined;

@@ -116,6 +116,7 @@ select, input[type='text'] { padding: 7px 10px; border: 1px solid var(--border);
 .score-host .at-cursor-bar { background: rgba(37, 99, 235, .12); }
 .score-host .at-cursor-beat { background: #2563eb; }
 .score-host .at-highlight * { fill: #2563eb; stroke: #2563eb; }
+.score-host .at-selection > div { background: rgba(234, 156, 35, .22); }
 .score-attribution { text-align: right; color: var(--muted); font-size: 10px; padding: 12px 4px 0; }
 .score-attribution a { color: var(--muted); }
 .view-hint { font-size: 10px; color: var(--muted); padding: 10px 3px 0; }

@@ -36,7 +36,7 @@ describe('stato corrente ripristinabile', () => {
   it('ripristina con comandi core, senza Play, rispettando il bordo B esclusivo', () => {
     let receive: (event: TransportEvent) => void = () => {};
     const port = { subscribeTransport: (listener: typeof receive) => { receive = listener; return () => {}; },
-      play: vi.fn(() => true), pause: vi.fn(), stop: vi.fn(), seek: vi.fn(), setSpeed: vi.fn(), setLoop: vi.fn() };
+      play: vi.fn(() => true), pause: vi.fn(), stop: vi.fn(), seek: vi.fn(), setSpeed: vi.fn(), setPlaybackRange: vi.fn() };
     const controller = new TransportController(port);
     receive({ type: 'preparing' });
     receive({ type: 'position', isSeek: true, position: { tick: 0, endTick: 1000, timeMs: 0, durationMs: 1000, tempo: 120 } });
@@ -50,13 +50,13 @@ describe('stato corrente ripristinabile', () => {
   it('ignora range oltre la durata reale e limita il seek al documento', () => {
     let receive: (event: TransportEvent) => void = () => {};
     const port = { subscribeTransport: (listener: typeof receive) => { receive = listener; return () => {}; },
-      play: vi.fn(() => true), pause: vi.fn(), stop: vi.fn(), seek: vi.fn(), setSpeed: vi.fn(), setLoop: vi.fn() };
+      play: vi.fn(() => true), pause: vi.fn(), stop: vi.fn(), seek: vi.fn(), setSpeed: vi.fn(), setPlaybackRange: vi.fn() };
     const controller = new TransportController(port);
     receive({ type: 'preparing' });
     receive({ type: 'position', isSeek: true, position: { tick: 0, endTick: 100, timeMs: 0, durationMs: 1000, tempo: 120 } });
     receive({ type: 'ready' }); restoreTransport(controller, snapshot().transport);
     expect(controller.state).toMatchObject({ a: 0, b: 100, loop: false, error: null });
-    expect(port.seek).toHaveBeenCalledWith(100); expect(port.setLoop).not.toHaveBeenCalled();
+    expect(port.seek).toHaveBeenCalledWith(100); expect(port.setPlaybackRange).not.toHaveBeenCalled();
     controller.dispose();
   });
 

@@ -2,6 +2,17 @@
 
 Aggiornato al riordino documentale del 19 novembre 2026.
 
+Aggiornamento M5: primo incremento implementato nella working tree, su `main`
+con baseline `aaaf3cc` (working tree pulita prima dell'intervento). Aggiunti
+selezione guidata sulla partitura dal pulsante «Practice a phrase», frammento
+nella stessa cornice e «Fine pratica» nello stesso posto per ripristino/reset.
+Contesto precedente e countdown sono combinabili; sessione in memoria e range
+senza loop, con lo stesso player e GP invariati. Dettagli,
+limiti e prove manuali in [M5_START.md](M5_START.md). Build/confini e 46 test Node
+mirati passati; verifica UI/ascolto dell'utente aperta. Registrazione simulata,
+applicazione variante e undo sono i prossimi step da concordare; nessun audio
+è acquisito. Nessun commit/push o intervento sul server di sviluppo.
+
 ## Ripartire
 
 1. Leggere AGENTS.md, TODO.md e ARCHITECTURE.md.
@@ -24,7 +35,7 @@ L'implementazione M5 richiede il successivo incarico e il piano relativo.
 - La sidebar destra ospita informazioni espandibili sul brano e mixer.
 - La correzione di note tramite fretboard è un obiettivo M5. La fretboard
   corrente svolge visualizzazione e supporto alla lettura.
-- M5 Guitar Capture & Play Session e M6 Storage & Projects sono ancora da affrontare.
+- M5 Guitar Capture & Play Session ha ora un primo incremento di selezione e prova, descritto sopra. Registrazione, varianti e M6 Storage & Projects restano da affrontare.
 
 L'utente ha confermato manualmente il ripristino della visibilità dopo refresh
 e il funzionamento degli archi hammer-on/pull-off. Ha accettato la resa compatta

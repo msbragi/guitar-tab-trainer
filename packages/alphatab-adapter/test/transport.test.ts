@@ -13,7 +13,8 @@ const fake = vi.hoisted(() => {
   class Api {
     beatMouseDown = new Events<model.Beat>();
     scrollToCursor = vi.fn();
-    tickCache = { getBeatStart: vi.fn(() => 1920) };
+    tickCache = { getBeatStart: vi.fn(() => 1920), masterBars: [] as { masterBar: { index: number }; start: number; end: number }[],
+      getRelativeBeatPlaybackRange: vi.fn(() => ({ startTick: 240, endTick: 480 })) };
     postRenderFinished = new Events(); error = new Events(); playerReady = new Events();
     playerStateChanged = new Events<{ state: number; stopped: boolean }>();
     playerPositionChanged = new Events<{ currentTick: number; endTick: number; currentTime: number; endTime: number; modifiedTempo: number; isSeek: boolean }>();
@@ -21,9 +22,11 @@ const fake = vi.hoisted(() => {
     playbackSpeed = 1; isLooping = false; playbackRange: unknown = null;
     score: model.Score | null = null; masterVolume = 1;
     destroy = vi.fn(); renderScore = vi.fn((score: model.Score) => { this.score = score; }); updateSettings = vi.fn();
+    render = vi.fn(); highlightPlaybackRange = vi.fn(); clearPlaybackRangeHighlight = vi.fn();
     changeTrackMute = vi.fn(); changeTrackSolo = vi.fn(); changeTrackVolume = vi.fn();
     play = vi.fn(() => true); pause = vi.fn(); stop = vi.fn();
-    constructor(readonly host: unknown, readonly settings: { core: Record<string, unknown>; player: Record<string, unknown> }) { instances.push(this); }
+    constructor(readonly host: unknown, readonly settings: { core: Record<string, unknown>; player: Record<string, unknown>;
+      display: { startBar?: number; barCount?: number } }) { instances.push(this); }
   }
   return { Api, instances, configure: vi.fn() };
 });
@@ -45,6 +48,44 @@ beforeEach(() => { fake.instances.length = 0; vi.useFakeTimers(); vi.stubGlobal(
 afterEach(() => { vi.useRealTimers(); vi.unstubAllGlobals(); });
 
 describe('port playback alphaTab', () => {
+  it('seleziona sulla partitura senza seek e ripristina il click normale alla fine', async () => {
+    const { adapter, events } = setup(); const load = adapter.load(bytes()); const api = latest();
+    api.postRenderFinished.emit(); await load; api.playerReady.emit();
+    const pick = vi.fn(); adapter.setPracticePicking(pick);
+    const beat = api.score!.tracks[0]!.staves[0]!.bars[0]!.voices[0]!.beats[0]!;
+    const count = events.length; api.beatMouseDown.emit(beat);
+    expect(pick).toHaveBeenCalledWith({ trackIndex: 0, barIndex: 0 }); expect(events).toHaveLength(count);
+    adapter.highlightPractice(0, 0, 0); expect(api.highlightPlaybackRange).toHaveBeenCalled();
+    adapter.setPracticePicking(null); adapter.clearPracticeHighlight(); api.beatMouseDown.emit(beat);
+    expect(events.at(-1)).toEqual({ type: 'seek-request', tick: 1920 });
+    expect(api.clearPlaybackRangeHighlight).toHaveBeenCalledOnce(); adapter.destroy();
+  });
+
+  it('ritaglia e ripristina la vista conservando documento e player', async () => {
+    const { adapter } = setup(); const load = adapter.load(bytes()); const api = latest();
+    api.postRenderFinished.emit(); await load; const score = api.score;
+    adapter.highlightPractice(0, 0, 0);
+    const crop = adapter.setPracticeView({ startBar: 0, endBar: 0 });
+    expect(api.settings.display).toMatchObject({ startBar: 1, barCount: 1 });
+    api.postRenderFinished.emit(); await crop;
+    const restore = adapter.setPracticeView(null); api.postRenderFinished.emit(); await restore;
+    expect(api.settings.display).toMatchObject({ startBar: 1, barCount: -1 });
+    expect(api.score).toBe(score); expect(fake.instances).toHaveLength(1);
+    expect(api.renderScore).toHaveBeenCalledOnce(); expect(api.render).toHaveBeenCalledTimes(2);
+    expect(api.highlightPlaybackRange).toHaveBeenCalledTimes(3);
+    expect(api.play).not.toHaveBeenCalled(); adapter.destroy();
+  });
+
+  it('mantiene il passaggio scelto nei click sul frammento invece di usare la prima ripetizione', async () => {
+    const { adapter, events } = setup(); const load = adapter.load(bytes()); const api = latest();
+    api.postRenderFinished.emit(); await load;
+    const beat = api.score!.tracks[0]!.staves[0]!.bars[0]!.voices[0]!.beats[0]!;
+    api.tickCache.masterBars = [{ masterBar: { index: 0 }, start: 0, end: 3840 }, { masterBar: { index: 0 }, start: 7680, end: 11520 }];
+    adapter.setPracticeTicks({ startTick: 7680, endTick: 11520 }); api.beatMouseDown.emit(beat);
+    expect(events.at(-1)).toEqual({ type: 'seek-request', tick: 7920 });
+    adapter.setPracticeTicks(null); api.beatMouseDown.emit(beat);
+    expect(events.at(-1)).toEqual({ type: 'seek-request', tick: 1920 }); adapter.destroy();
+  });
   it('prepara audio dopo rendering, forza il synth e converte eventi senza esporre modelli', async () => {
     const { adapter, events } = setup(); const load = adapter.load(bytes()); const api = latest();
     expect(api.updateSettings).not.toHaveBeenCalled();
@@ -59,9 +100,11 @@ describe('port playback alphaTab', () => {
     adapter.play(); adapter.pause(); adapter.stop(); adapter.seek(300); adapter.setSpeed(0.5);
     expect(api.play).toHaveBeenCalledOnce(); expect(api.pause).toHaveBeenCalledOnce(); expect(api.stop).toHaveBeenCalledOnce();
     expect(api.tickPosition).toBe(300); expect(api.playbackSpeed).toBe(0.5);
-    adapter.setLoop({ startTick: 100, endTick: 700 }, 400);
+    adapter.setPlaybackRange({ startTick: 100, endTick: 700 }, 400);
     expect(api.isLooping).toBe(true); expect(api.playbackRange).toEqual({ startTick: 100, endTick: 700 }); expect(api.tickPosition).toBe(400);
-    adapter.setLoop(null, 400); expect(api.isLooping).toBe(false); expect(api.playbackRange).toBeNull();
+    adapter.setPlaybackRange({ startTick: 100, endTick: 700 }, 100, false);
+    expect(api.isLooping).toBe(false); expect(api.playbackRange).toEqual({ startTick: 100, endTick: 700 });
+    adapter.setPlaybackRange(null, 400); expect(api.isLooping).toBe(false); expect(api.playbackRange).toBeNull();
     adapter.destroy(); expect(vi.getTimerCount()).toBe(0);
   });
 

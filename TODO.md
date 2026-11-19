@@ -34,8 +34,8 @@ archi H/P. Questi riscontri coesistono con i debiti automatici documentati.
 **Da affrontare progressivamente.** Punto di partenza in
 [docs/M5_START.md](docs/M5_START.md).
 
-- [ ] Analizzare il flusso e concordare un primo incremento.
-- [ ] Selezionare un intervallo di battute e creare una sessione di lavoro con l'accompagnamento originale.
+- [x] Analizzare il flusso e concordare un primo incremento.
+- [x] Selezionare un intervallo di battute e creare una sessione di lavoro con il synth GP e il mixer corrente (backing audio reale da concordare).
 - [ ] Consentire l'avvio del playback prima dell'intervallo e limitare la registrazione al segmento desiderato.
 - [ ] Acquisire la propria esecuzione sulla chitarra reale.
 - [ ] Convertire l'audio acquisito in eventi musicali e tablatura.
@@ -45,6 +45,33 @@ archi H/P. Questi riscontri coesistono con i debiti automatici documentati.
 
 Dispositivi, allineamento audio/posizione musicale e qualità della conversione
 richiedono prove mirate. Hendrix è un candidato da valutare.
+
+### Primo incremento approvato — selezione e prova della frase
+
+Correzione UX concordata: sostituire il pannello sempre visibile con un flusso
+diretto sulla partitura. Il pulsante in toolbar avvia la selezione guidata;
+«Fine pratica» occupa lo stesso posto e ripristina la vista completa/resetta
+la sessione. Nessun tab aggiuntivo o finestra separata.
+
+- [x] Selezione guidata IN/OUT tramite click sulla partitura, senza seek durante la scelta.
+- [x] Evidenza della selezione e configurazione compatta di contesto/countdown; passaggio richiesto solo per battute ripetute.
+- [x] Mostrare il frammento nella stessa cornice usando display.startBar/barCount pubblici, senza duplicare player o modificare i GP.
+- [x] Fine pratica ripristina la partitura completa e azzera selezione, conteggio e sessione.
+- [x] Verificare transizioni, adapter, regressioni mirate (46 test Node) e build.
+
+- [x] Proiettare le occorrenze delle battute dalle API pubbliche alphaTab 1.9.
+- [x] Selezionare traccia e intervallo contiguo nell'esecuzione, rendendo visibili ripetizioni e finali.
+- [x] Creare una sessione di lavoro in memoria, con anticipo in battute eseguite.
+- [x] Distinguere punch-in/punch-out dal contesto; contesto precedente e conteggio selezionabili anche insieme (conteggio proposto all’inizio).
+- [x] Ascoltare una passata fino alla fine della frase usando il synth e il mixer esistenti, disattivando il loop senza perdere A/B.
+- [x] Invalidare la sessione al cambio documento; preservare GP e recupero M4.
+- [x] Verificare logica con test mirati (46 passati), build e confini.
+- [ ] Verifica UI e ascolto nel browser a cura dell’utente: due click, annullamento/ricomincia, frammento/zoom, contesto e countdown, Fine pratica/reset e ritorno ad A/B.
+
+Step successivi da concordare separatamente: registrazione simulata, applicazione
+della variante alla copia di lavoro e undo, poi acquisizione e trascrizione.
+Hendrix Moonshroom è utilizzabile come candidato nativo MIT; compatibilità
+browser e qualità non sono ancora validate. Nessuna nuova dipendenza nel primo incremento.
 
 ## M6 — Storage & Projects
 

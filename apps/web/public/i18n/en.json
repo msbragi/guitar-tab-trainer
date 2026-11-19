@@ -1,4 +1,28 @@
 {
+  "practice": {
+    "title": "Practice phrase",
+    "preparation": "Before the phrase",
+    "countIn": "Count-in · 1 bar",
+    "leadBars": "Previous bars",
+    "invalid": "Enter a whole number of preceding bars, zero or greater, and a valid occurrence.",
+    "counting": "Count-in: {{count}}",
+    "playingContext": "Playing context",
+    "playingPhrase": "Playing phrase",
+    "countInFailed": "Audio count-in unavailable. Finish practice and try again without a count-in.",
+    "launch": "Practice a phrase",
+    "finish": "Finish practice",
+    "start": "Start practice",
+    "selectStart": "Select the first bar",
+    "selectEnd": "Select the last bar",
+    "clickHint": "Click directly on the score.",
+    "endBeforeStart": "The end must be at or after the start.",
+    "phraseSummary": "{{track}} · bars {{from}}–{{to}}",
+    "startPass": "Start occurrence",
+    "endPass": "End occurrence",
+    "contextAvailable": "Context: {{count}} preceding bars",
+    "restart": "Start over",
+    "cancel": "Cancel"
+  },
   "fretboard": {
     "effects": {"hammerOn": "Hammer-on", "pullOff": "Pull-off","title": "Note effects", "position": "String {{string}}, fret {{fret}}", "bend": "Bend", "tones": "tones", "vibrato": "Vibrato", "vibratoWide": "Wide vibrato", "slide": "Slide", "legatoSlide": "Legato slide", "pickSlide": "Pick slide", "in": "in", "out": "out"},
     "notes": {"0": "C", "1": "C♯", "2": "D", "3": "D♯", "4": "E", "5": "F", "6": "F♯", "7": "G", "8": "G♯", "9": "A", "10": "A♯", "11": "B"},

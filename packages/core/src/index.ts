@@ -6,3 +6,7 @@ export { TransportController, initialTransportState } from './transport.js';
 export type { TransportPort, TransportState, TransportStatus, TransportPosition, TransportEvent, TransportError } from './transport.js';
 export { MixerController, initialMixerState } from './mixer.js';
 export type { MixerPort, MixerState, MixerTrackState, MixerTrackDefinition, MixerEvent } from './mixer.js';
+export { practiceRange } from './practice.js';
+export type { PlaybackBar, PracticeSelection, PracticeRange } from './practice.js';
+export { pickPracticeBar } from './practice-flow.js';
+export type { PracticeFlow, PracticeBarPick } from './practice-flow.js';

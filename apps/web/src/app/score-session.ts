@@ -1,5 +1,5 @@
 import { DOCUMENT } from '@angular/common';
-import { inject, Injectable, signal } from '@angular/core';
+import { computed, inject, Injectable, signal } from '@angular/core';
 import { ScoreController, ScoreLoadError, TransportController, initialTransportState, MixerController, initialMixerState } from '@guitar-practice/core';
 import type { ScoreErrorCode, ScoreState, TransportState, MixerState, ScoreSource } from '@guitar-practice/core';
 import { AlphaTabScoreAdapter } from '@guitar-practice/alphatab-adapter';
@@ -10,6 +10,9 @@ import type { CurrentSessionFile } from './current-session-store.js';
 import { captureCurrentSessionState, restoreMixer, restoreTransport } from './current-session-state.js';
 import type { CurrentSessionState, SavedTransport, SavedMixer } from './current-session-state.js';
 import type { ScoreViewMode } from '@guitar-practice/alphatab-adapter';
+import { pickPracticeBar, practiceRange } from '@guitar-practice/core';
+import type { PlaybackBar, PracticeSelection, PracticeFlow, PracticeBarPick } from '@guitar-practice/core';
+import { CountIn } from './practice/count-in.js';
 
 /** Composizione UI di core e adapter. I componenti presentano dati e inoltrano comandi. */
 @Injectable({ providedIn: 'root' })
@@ -27,6 +30,21 @@ export class ScoreSession {
   private readonly transportSnapshot = signal<TransportState>(initialTransportState());
   /** Proiezione dello stato del core; nessuna transizione del trasporto nella UI. */
   readonly transport = this.transportSnapshot.asReadonly();
+  private readonly barsSnapshot = signal<readonly PlaybackBar[]>([]);
+  readonly playbackBars = this.barsSnapshot.asReadonly();
+  private readonly practiceSnapshot = signal<PracticeSelection | null>(null);
+  readonly practice = this.practiceSnapshot.asReadonly();
+  private readonly flowSnapshot = signal<PracticeFlow>({ phase: 'idle' });
+  readonly practiceFlow = this.flowSnapshot.asReadonly();
+  readonly practiceSelectionError = signal(false);
+  readonly countInRemaining = signal<number | null>(null);
+  readonly countInFailed = signal(false);
+  private readonly countIn = new CountIn();
+  private countInAttempt = 0;
+  readonly practiceRange = computed(() => {
+    const selection = this.practice();
+    return selection ? practiceRange(this.playbackBars(), selection) : null;
+  });
   private transportController: TransportController | undefined;
   private readonly mixerSnapshot = signal<MixerState>(initialMixerState());
   readonly mixer = this.mixerSnapshot.asReadonly();
@@ -86,6 +104,14 @@ export class ScoreSession {
     let restoreTransportPreferences = true;
     const unsubscribeTransport = transport.subscribe((state) => {
       this.transportSnapshot.set(state);
+      if (state.status === 'idle' || state.status === 'preparing') {
+        this.cancelCountIn();
+        this.barsSnapshot.set([]); this.resetPractice();
+      } else if (state.status === 'error') {
+        this.cancelCountIn();
+      } else if (state.status === 'stopped' && !this.playbackBars().length) {
+        this.barsSnapshot.set(adapter.playbackBars());
+      }
       if ((restoreTransportPreferences || this.pendingTransport) && state.status === 'stopped') {
         restoreTransportPreferences = false;
         const saved = this.pendingTransport;
@@ -144,6 +170,8 @@ export class ScoreSession {
       this.document.removeEventListener('visibilitychange', visibility);
       store.close(); this.store = undefined;
       this.available.set(false);
+      this.cancelCountIn();
+      this.barsSnapshot.set([]); this.resetPractice();
       unsubscribe(); controller.dispose(); adapter.destroy();
       unsubscribeTransport(); transport.dispose(); this.transportController = undefined;
       unsubscribeMixer(); mixer.dispose(); this.mixerController = undefined;
@@ -158,16 +186,119 @@ export class ScoreSession {
     return frame && endTick > 0 && tick >= endTick ? { ...frame, positions: [] } : frame;
   }
 
-  play(): void { this.transportController?.play(); }
-  pause(): void { this.transportController?.pause(); }
-  stop(): void { this.transportController?.stop(); }
-  seek(tick: number): void { this.transportController?.seek(tick); }
+  play(): void {
+    if (this.countInRemaining() !== null) return;
+    if (this.practiceFlow().phase === 'active' && this.transport().status === 'stopped') {
+      this.previewPractice(); return;
+    }
+    if (this.practiceFlow().phase !== 'idle' && this.practiceFlow().phase !== 'active') return;
+    this.transportController?.play();
+  }
+  beginPractice(): void {
+    if (this.state().status !== 'ready' || this.viewBusy() || !this.playbackBars().length || this.practiceFlow().phase === 'active'
+      || !['stopped', 'paused', 'playing'].includes(this.transport().status)) return;
+    this.stop(); this.resetPractice();
+    this.flowSnapshot.set({ phase: 'start' });
+    this.adapter?.setPracticePicking((pick) => this.pickPractice(pick));
+  }
+  private pickPractice(pick: PracticeBarPick): void {
+    if (this.viewBusy()) return;
+    const flow = this.practiceFlow();
+    const next = pickPracticeBar(flow, pick);
+    this.practiceSelectionError.set(next === flow && flow.phase === 'end');
+    if (next === flow) return;
+    this.flowSnapshot.set(next);
+    if (next.phase === 'end' || next.phase === 'configure') {
+      this.adapter?.highlightPractice(next.trackIndex, next.startBar, next.phase === 'end' ? next.startBar : next.endBar);
+    }
+  }
+  restartPracticeSelection(): void {
+    if (this.practiceFlow().phase !== 'active') this.beginPractice();
+  }
+  async startPractice(selection: PracticeSelection): Promise<void> {
+    const state = this.state();
+    const flow = this.practiceFlow();
+    const range = practiceRange(this.playbackBars(), selection);
+    if (state.status !== 'ready' || !state.score.tracks.some(({ index }) => index === selection.trackIndex)
+      || !range || flow.phase !== 'configure' || this.viewBusy() || !this.adapter
+      || selection.trackIndex !== flow.trackIndex
+      || this.playbackBars()[selection.from]?.barIndex !== flow.startBar
+      || this.playbackBars()[selection.to]?.barIndex !== flow.endBar) return;
+    const bars = this.playbackBars().slice(selection.from - range.leadInBars, selection.to + 1);
+    this.viewBusy.set(true); this.viewError.set(null);
+    try {
+      await this.adapter.setPracticeView({ startBar: Math.min(...bars.map((bar) => bar.barIndex)),
+        endBar: Math.max(...bars.map((bar) => bar.barIndex)) });
+      this.practiceSnapshot.set(Object.freeze({ ...selection }));
+      this.flowSnapshot.set({ ...flow, phase: 'active' });
+      this.adapter.setPracticePicking(null);
+      this.adapter.setPracticeTicks({ startTick: range.playbackStartTick, endTick: range.endTick });
+      this.transportController?.prepareRange(range.playbackStartTick, range.endTick);
+      this.adapter.highlightPractice(flow.trackIndex, flow.startBar, flow.endBar);
+    } catch (error: unknown) {
+      this.viewError.set(error instanceof ScoreLoadError ? error.code : 'render-failed');
+    } finally { this.viewBusy.set(false); }
+  }
+  async finishPractice(): Promise<void> {
+    if (this.viewBusy()) return;
+    this.cancelCountIn(); this.transportController?.stop();
+    if (this.practiceFlow().phase !== 'active') { this.resetPractice(); return; }
+    if (!this.adapter) return;
+    this.viewBusy.set(true); this.viewError.set(null);
+    try {
+      await this.adapter.setPracticeView(null);
+      this.resetPractice();
+    } catch (error: unknown) {
+      this.viewError.set(error instanceof ScoreLoadError ? error.code : 'render-failed');
+    } finally { this.viewBusy.set(false); }
+  }
+  private resetPractice(): void {
+    this.cancelCountIn();
+    this.practiceSnapshot.set(null);
+    this.flowSnapshot.set({ phase: 'idle' }); this.practiceSelectionError.set(false);
+    this.adapter?.setPracticePicking(null); this.adapter?.setPracticeTicks(null); this.adapter?.clearPracticeHighlight();
+  }
+  previewPractice(): void {
+    const range = this.practiceRange();
+    const selection = this.practice();
+    if (!range || !selection || !['stopped', 'paused', 'playing'].includes(this.transport().status)) return;
+    this.cancelCountIn();
+    const start = () => this.transportController?.playRange(range.playbackStartTick, range.endTick);
+    if (!range.countIn) { start(); return; }
+    this.transportController?.pause();
+    const bar = this.playbackBars()[selection.from - range.leadInBars]!;
+    this.countInRemaining.set(bar.numerator);
+    const attempt = this.countInAttempt;
+    void this.countIn.start({ ...bar, speed: this.transport().speed },
+      (remaining) => this.countInRemaining.set(remaining),
+      () => { this.countInRemaining.set(null); start(); },
+    ).catch(() => {
+      if (attempt !== this.countInAttempt) return;
+      this.countInRemaining.set(null); this.countInFailed.set(true);
+    });
+  }
+  private cancelCountIn(): void {
+    this.countInAttempt++; this.countIn.cancel(); this.countInRemaining.set(null); this.countInFailed.set(false);
+  }
+  pause(): void { this.cancelCountIn(); this.transportController?.pause(); }
+  stop(): void {
+    this.cancelCountIn(); this.transportController?.stop();
+    const range = this.practiceFlow().phase === 'active' ? this.practiceRange() : null;
+    if (range) this.transportController?.prepareRange(range.playbackStartTick, range.endTick);
+  }
+  seek(tick: number): void {
+    this.cancelCountIn();
+    const range = this.practiceFlow().phase === 'active' ? this.practiceRange() : null;
+    if (range && !this.transport().previewRange) this.transportController?.prepareRange(range.playbackStartTick, range.endTick);
+    this.transportController?.seek(range ? Math.max(range.playbackStartTick, Math.min(range.endTick - 1, tick)) : tick);
+  }
   setSpeed(speed: number): void {
+    this.cancelCountIn();
     this.transportController?.setSpeed(speed);
     if (this.transport().error === null) this.savePreferences({ speed: this.transport().speed });
   }
-  setLoopPoint(point: 'a' | 'b'): void { this.transportController?.setPoint(point); }
-  toggleLoop(): void { this.transportController?.toggleLoop(); }
+  setLoopPoint(point: 'a' | 'b'): void { if (this.practiceFlow().phase !== 'idle') return; this.cancelCountIn(); this.transportController?.setPoint(point); }
+  toggleLoop(): void { if (this.practiceFlow().phase !== 'idle') return; this.cancelCountIn(); this.transportController?.toggleLoop(); }
   async toggleTrackVisibility(index: number): Promise<void> {
     const hidden = this.hidden();
     await this.showTracks(hidden.includes(index) ? hidden.filter((item) => item !== index) : [...hidden, index]);

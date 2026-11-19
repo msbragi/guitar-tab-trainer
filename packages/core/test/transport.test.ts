@@ -14,7 +14,7 @@ class Port implements TransportPort {
   stop = vi.fn();
   seek = vi.fn();
   setSpeed = vi.fn();
-  setLoop = vi.fn();
+  setPlaybackRange = vi.fn();
   position(tick = 100) {
     this.emit({ type: 'position', isSeek: true, position: { tick, endTick: 1000, timeMs: tick * 3,
       durationMs: 3000, tempo: 120 } });
@@ -28,6 +28,52 @@ function setup() {
 }
 
 describe('trasporto autorevole nel core', () => {
+  it('prepara il frammento senza autoplay e conserva il range sui seek interni', () => {
+    const { port, controller } = setup();
+    controller.prepareRange(200, 700);
+    expect(port.play).not.toHaveBeenCalled();
+    expect(port.setPlaybackRange).toHaveBeenLastCalledWith({ startTick: 200, endTick: 700 }, 200, false);
+    controller.seek(400); expect(controller.state.previewRange).toEqual({ startTick: 200, endTick: 700 });
+    expect(port.seek).toHaveBeenLastCalledWith(400);
+    controller.seek(800); expect(controller.state.previewRange).toBeNull();
+  });
+  it('prova una sola passata con anticipo, disattivando il loop e conservando A/B', () => {
+    const { port, controller } = setup();
+    controller.setPoint('a', 300); controller.setPoint('b', 600); controller.toggleLoop();
+    controller.playRange(100, 800);
+    expect(port.setPlaybackRange).toHaveBeenLastCalledWith({ startTick: 100, endTick: 800 }, 100, false);
+    expect(controller.state).toMatchObject({ a: 300, b: 600, loop: false, previewRange: { startTick: 100, endTick: 800 } });
+    port.emit({ type: 'state', status: 'playing' }); port.position(500);
+    controller.pause(); port.emit({ type: 'state', status: 'paused' });
+    expect(controller.state.previewRange).not.toBeNull();
+    controller.play(); port.emit({ type: 'state', status: 'playing' });
+    port.emit({ type: 'state', status: 'stopped' });
+    expect(controller.state.previewRange).not.toBeNull();
+    controller.play(); expect(controller.state.previewRange).toBeNull();
+    expect(port.setPlaybackRange).toHaveBeenLastCalledWith(null, 500);
+    controller.toggleLoop();
+    expect(port.setPlaybackRange).toHaveBeenLastCalledWith({ startTick: 300, endTick: 600 }, 500);
+  });
+
+  it('annulla la prova su seek/stop, rifiuta range invalidi e gestisce play rifiutato', () => {
+    const { port, controller } = setup();
+    for (const [start, end] of [[0, 0], [-1, 100], [200, 100], [0, 1001], [NaN, 100]]) controller.playRange(start!, end!);
+    expect(port.play).not.toHaveBeenCalled();
+    controller.playRange(100, 700); controller.seek(900);
+    expect(controller.state.previewRange).toBeNull(); expect(port.seek).toHaveBeenLastCalledWith(900);
+    controller.playRange(100, 700); controller.stop(); expect(controller.state.previewRange).toBeNull();
+    port.play.mockReturnValue(false); controller.playRange(100, 700);
+    expect(controller.state).toMatchObject({ previewRange: null, error: 'audio-unavailable' });
+  });
+
+  it('non cancella una nuova prova per uno Stop precedente ancora in volo', () => {
+    const { port, controller } = setup();
+    controller.stop(); controller.playRange(100, 700);
+    port.emit({ type: 'state', status: 'stopped' });
+    port.emit({ type: 'state', status: 'playing' });
+    expect(controller.state.previewRange).toEqual({ startTick: 100, endTick: 700 });
+    expect(port.setPlaybackRange).toHaveBeenLastCalledWith({ startTick: 100, endTick: 700 }, 100, false);
+  });
   it('ignora comandi prima della preparazione, pubblica snapshot immutabili e attende gli eventi del player', () => {
     const port = new Port(); const controller = new TransportController(port);
     const listener = vi.fn(); controller.subscribe(listener);
@@ -63,27 +109,27 @@ describe('trasporto autorevole nel core', () => {
     port.emit({ type: 'state', status: 'playing' }); port.position(400);
     controller.toggleLoop();
     controller.setPoint('a', 200); controller.setPoint('b', 700);
-    expect(port.setLoop).toHaveBeenLastCalledWith({ startTick: 200, endTick: 700 }, 400);
+    expect(port.setPlaybackRange).toHaveBeenLastCalledWith({ startTick: 200, endTick: 700 }, 400);
     expect(controller.state).toMatchObject({ status: 'playing', a: 200, b: 700, loop: true });
     controller.setPoint('b', 300);
-    expect(port.setLoop).toHaveBeenLastCalledWith({ startTick: 200, endTick: 300 }, 200);
+    expect(port.setPlaybackRange).toHaveBeenLastCalledWith({ startTick: 200, endTick: 300 }, 200);
     controller.setPoint('a', 250);
-    expect(port.setLoop).toHaveBeenLastCalledWith({ startTick: 250, endTick: 300 }, 250);
+    expect(port.setPlaybackRange).toHaveBeenLastCalledWith({ startTick: 250, endTick: 300 }, 250);
     controller.seek(300); expect(port.seek).toHaveBeenLastCalledWith(250);
     controller.seek(1); expect(port.seek).toHaveBeenLastCalledWith(250);
-    controller.toggleLoop(); expect(port.setLoop).toHaveBeenLastCalledWith(null, 400);
+    controller.toggleLoop(); expect(port.setPlaybackRange).toHaveBeenLastCalledWith(null, 400);
     expect(port.pause).not.toHaveBeenCalled(); expect(port.play).not.toHaveBeenCalled();
   });
 
   it('rifiuta intervalli invalidi senza alterare il loop attivo', () => {
     const { port, controller } = setup();
     controller.setPoint('a', 200); controller.setPoint('b', 600); controller.toggleLoop();
-    port.setLoop.mockClear();
+    port.setPlaybackRange.mockClear();
     for (const [point, tick] of [['a', 600], ['a', -1], ['b', 200], ['b', 1001], ['b', NaN]] as const) {
       controller.setPoint(point, tick);
       expect(controller.state).toMatchObject({ a: 200, b: 600, loop: true, error: 'invalid-loop' });
     }
-    expect(port.setLoop).not.toHaveBeenCalled();
+    expect(port.setPlaybackRange).not.toHaveBeenCalled();
   });
 
   it('imposta i punti dalla posizione confermata e non invia range fino ad attivazione', () => {
@@ -91,8 +137,8 @@ describe('trasporto autorevole nel core', () => {
     port.position(100); controller.setPoint('a');
     port.position(900); controller.setPoint('b');
     expect(controller.state).toMatchObject({ a: 100, b: 900 });
-    expect(port.setLoop).not.toHaveBeenCalled();
-    controller.toggleLoop(); expect(port.setLoop).toHaveBeenCalledWith({ startTick: 100, endTick: 900 }, 100);
+    expect(port.setPlaybackRange).not.toHaveBeenCalled();
+    controller.toggleLoop(); expect(port.setPlaybackRange).toHaveBeenCalledWith({ startTick: 100, endTick: 900 }, 100);
   });
 
   it('reset azzera anche velocità e loop; errori audio non modificano lo stato del documento', () => {

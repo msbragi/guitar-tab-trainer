@@ -17,6 +17,7 @@ export interface TransportState extends TransportPosition {
   readonly a: number | null;
   readonly b: number | null;
   readonly error: TransportError | null;
+  readonly previewRange: { readonly startTick: number; readonly endTick: number } | null;
 }
 
 export type TransportEvent =
@@ -34,12 +35,12 @@ export interface TransportPort {
   stop(): void;
   seek(tick: number): void;
   setSpeed(factor: number): void;
-  setLoop(range: { readonly startTick: number; readonly endTick: number } | null, tick: number): void;
+  setPlaybackRange(range: { readonly startTick: number; readonly endTick: number } | null, tick: number, looping?: boolean): void;
 }
 
 export function initialTransportState(): TransportState {
   return Object.freeze({ status: 'idle', tick: 0, endTick: 0, timeMs: 0, durationMs: 0,
-    tempo: 0, speed: 1, loop: false, a: null, b: null, error: null });
+    tempo: 0, speed: 1, loop: false, a: null, b: null, error: null, previewRange: null });
 }
 
 /** Unica rappresentazione applicativa del trasporto. Nessun clock concorrente. */
@@ -58,12 +59,43 @@ export class TransportController {
     this.listeners.add(listener); listener(this.current);
     return () => { this.listeners.delete(listener); };
   }
-  play(): void { this.command(() => { if (!this.port.play()) this.patch({ error: 'audio-unavailable' }); }); }
+  play(): void {
+    this.command(() => {
+      // After a completed preview, normal Play returns to the full song; pause resumes it.
+      if (this.current.status === 'stopped') this.clearPreview();
+      if (!this.port.play()) this.patch({ error: 'audio-unavailable' });
+    });
+  }
   pause(): void { this.command(() => this.port.pause()); }
-  stop(): void { this.command(() => this.port.stop()); }
+  stop(): void { this.command(() => { this.clearPreview(); this.port.stop(); }); }
+  /** One pass, including lead-in. A/B points survive; looping is disabled. */
+  playRange(startTick: number, endTick: number): void {
+    if (!this.prepareRange(startTick, endTick)) return;
+    this.command(() => {
+      if (!this.port.play()) { this.clearPreview(); this.patch({ error: 'audio-unavailable' }); }
+    });
+  }
+  /** Select a bounded window without starting playback. */
+  prepareRange(startTick: number, endTick: number): boolean {
+    if (!this.ready()) return false;
+    if (![startTick, endTick].every(Number.isFinite) || startTick < 0
+      || startTick >= endTick || endTick > this.current.endTick) {
+      this.patch({ error: 'invalid-command' }); return false;
+    }
+    this.command(() => {
+      if (this.current.status === 'playing') this.port.pause();
+      this.patch({ loop: false, previewRange: Object.freeze({ startTick, endTick }) });
+      this.port.setPlaybackRange(this.current.previewRange, startTick, false);
+    });
+    return this.current.error === null;
+  }
   seek(tick: number): void {
     if (!Number.isFinite(tick)) { this.patch({ error: 'invalid-command' }); return; }
-    this.command(() => this.port.seek(this.limitTick(tick)));
+    this.command(() => {
+      const range = this.current.previewRange;
+      if (range && (tick < range.startTick || tick >= range.endTick)) this.clearPreview();
+      this.port.seek(this.limitTick(tick));
+    });
   }
   setSpeed(speed: number): void {
     if (!Number.isFinite(speed) || speed < 0.25 || speed > 2) {
@@ -80,21 +112,27 @@ export class TransportController {
       this.patch({ error: 'invalid-loop' }); return;
     }
     this.command(() => {
+      this.clearPreview();
       this.patch({ a, b });
       if (this.current.loop) this.applyLoop();
     });
   }
   toggleLoop(): void {
     if (!this.ready()) return;
-    this.command(() => { this.patch({ loop: !this.current.loop }); this.applyLoop(); });
+    this.command(() => { this.clearPreview(); this.patch({ loop: !this.current.loop }); this.applyLoop(); });
   }
   dispose(): void {
     this.disposed = true; this.unsubscribe(); this.listeners.clear();
   }
   private applyLoop(): void {
     const { a, b, loop } = this.current;
-    this.port.setLoop(loop && a !== null && b !== null ? { startTick: a, endTick: b } : null,
+    this.port.setPlaybackRange(loop && a !== null && b !== null ? { startTick: a, endTick: b } : null,
       this.limitTick(this.current.tick));
+  }
+  private clearPreview(): void {
+    if (!this.current.previewRange) return;
+    this.patch({ previewRange: null });
+    this.port.setPlaybackRange(null, this.current.tick);
   }
   private limitTick(tick: number): number {
     const { loop, a, b, endTick } = this.current;
@@ -109,7 +147,7 @@ export class TransportController {
   private command(action: () => void): void {
     if (!this.ready()) return;
     this.patch({ error: null });
-    try { action(); } catch { this.patch({ status: 'error', error: 'playback-failed' }); }
+    try { action(); } catch { this.patch({ status: 'error', error: 'playback-failed', previewRange: null }); }
   }
   private receive(event: TransportEvent): void {
     if (this.disposed) return;
@@ -126,8 +164,11 @@ export class TransportController {
         if (this.current.status === 'preparing' || this.current.status === 'playing'
           || (this.ready() && event.isSeek)) this.patch(event.position);
         break;
-      case 'state': if (this.ready()) this.patch({ status: event.status }); break;
-      case 'error': this.patch({ status: 'error', error: event.error }); break;
+      case 'state':
+        // Do not mutate a newly requested range from a delayed Stop notification.
+        if (this.ready()) this.patch({ status: event.status });
+        break;
+      case 'error': this.patch({ status: 'error', error: event.error, previewRange: null }); break;
     }
   }
   private patch(patch: Partial<TransportState>): void {

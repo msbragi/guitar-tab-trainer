@@ -85,6 +85,20 @@ saranno definiti in base al primo incremento concordato.
 Il trasporto M4 costituisce la base esistente e richiede validazione
 nell'integrazione con l'acquisizione. [Avvio M5](M5_START.md)
 
+Il primo incremento introduce `PlaybackBar`, `PracticeSelection` e la politica pura
+`practiceRange` nel core. L'adapter proietta il tick cache pubblico della 1.9;
+nessun modello alphaTab attraversa il confine. `TransportPort.setPlaybackRange`
+sostituisce `setLoop` per distinguere range e ripetizione, e il controller gestisce
+la prova di una passata senza perdere A/B. `ScoreSession` compone la selezione
+in memoria e il flusso guidato `PracticeFlow`; un componente Angular dedicato
+mostra istruzioni e preparazione soltanto durante la selezione. I click pubblici
+del beat diventano scelte di battuta senza seek. Il frammento usa
+`display.startBar/barCount`, preservando modello e player; Fine pratica
+ripristina la vista completa e resetta la sessione.
+Il modulo browser `practice/count-in.ts`, indipendente da Angular, gestisce soltanto
+i click prima del brano. Dopo il conteggio l'autorità temporale resta alphaTab.
+La sessione di lavoro non estende lo snapshot IndexedDB e non modifica i GP.
+
 ## Direzione M6 — Storage & Projects
 
 M6 progetterà la conservazione persistente di brani, sessioni di lavoro,

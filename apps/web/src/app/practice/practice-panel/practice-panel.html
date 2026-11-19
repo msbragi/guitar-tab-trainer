@@ -1,0 +1,57 @@
+@let stage = flow().phase;
+@if (stage !== 'idle') {
+  <section class="practice-bar" [attr.aria-label]="'practice.title' | transloco">
+    @if (stage === 'start' || stage === 'end') {
+      <div class="selection-prompt" role="status" aria-live="polite">
+        <strong>{{ (stage === 'start' ? 'practice.selectStart' : 'practice.selectEnd') | transloco }}</strong>
+        @if (stage === 'end') { <span>{{ trackName() }}</span> }
+        <span class="hint">{{ 'practice.clickHint' | transloco }}</span>
+      </div>
+      @if (session.practiceSelectionError()) { <span class="error-message" role="alert">{{ 'practice.endBeforeStart' | transloco }}</span> }
+    }
+    @if (stage === 'configure') {
+      @if (summary(); as text) { <strong class="summary">{{ 'practice.phraseSummary' | transloco: text }}</strong> }
+      <fieldset [disabled]="!ready()">
+        <legend class="visually-hidden">{{ 'practice.preparation' | transloco }}</legend>
+        @if (startOptions().length > 1) {
+          <label>{{ 'practice.startPass' | transloco }}
+            <select #startPass [value]="from()" (change)="chooseStart(+startPass.value)">
+              @for (bar of startOptions(); track bar.index) { <option [value]="bar.index" [selected]="bar.index === from()">{{ bar.occurrence }}</option> }
+            </select>
+          </label>
+        }
+        @if (endOptions().length > 1) {
+          <label>{{ 'practice.endPass' | transloco }}
+            <select #endPass [value]="to()" (change)="to.set(+endPass.value)">
+              @for (bar of endOptions(); track bar.index) { <option [value]="bar.index" [selected]="bar.index === to()">{{ bar.occurrence }}</option> }
+            </select>
+          </label>
+        }
+        <label>{{ 'practice.leadBars' | transloco }}
+          <input #leadInput type="number" min="0" step="1" [value]="lead()" (input)="lead.set(leadInput.valueAsNumber)">
+        </label>
+        <label class="count-in"><input #countInput type="checkbox" [checked]="countIn()" (change)="countIn.set(countInput.checked)">{{ 'practice.countIn' | transloco }}</label>
+        <button type="button" class="primary-button" [disabled]="!range()" (click)="start()">{{ 'practice.start' | transloco }}</button>
+      </fieldset>
+      @if (range(); as timing) {
+        <span class="hint">{{ 'practice.contextAvailable' | transloco: { count: timing.leadInBars } }}</span>
+      } @else { <span class="error-message" role="alert">{{ 'practice.invalid' | transloco }}</span> }
+    }
+    @if (stage === 'active') {
+      @if (summary(); as text) { <strong class="summary">{{ 'practice.phraseSummary' | transloco: text }}</strong> }
+      <span class="hint">{{ 'practice.contextAvailable' | transloco: { count: session.practiceRange()?.leadInBars ?? 0 } }}</span>
+      @if (session.practiceRange()?.countIn) { <span class="hint">{{ 'practice.countIn' | transloco }}</span> }
+      <span role="status" aria-live="polite">
+        @if (session.countInRemaining(); as remaining) { {{ 'practice.counting' | transloco: { count: remaining } }} }
+        @else if (session.transport().status === 'playing') {
+          {{ (session.transport().tick < (session.practiceRange()?.startTick ?? 0) ? 'practice.playingContext' : 'practice.playingPhrase') | transloco }}
+        }
+      </span>
+      @if (session.countInFailed()) { <span class="error-message" role="alert">{{ 'practice.countInFailed' | transloco }}</span> }
+    } @else if (stage !== 'start') {
+      <div class="selection-actions">
+        <button type="button" class="text-button" [disabled]="session.viewBusy()" (click)="session.restartPracticeSelection()">{{ 'practice.restart' | transloco }}</button>
+      </div>
+    }
+  </section>
+}

@@ -1,4 +1,28 @@
 {
+  "practice": {
+    "title": "Frase di lavoro",
+    "preparation": "Prima della frase",
+    "countIn": "Conteggio · 1 battuta",
+    "leadBars": "Battute precedenti",
+    "invalid": "Indica un numero intero di battute precedenti maggiore o uguale a zero e un passaggio valido.",
+    "counting": "Conteggio: {{count}}",
+    "playingContext": "Ascolto del contesto",
+    "playingPhrase": "Ascolto della frase",
+    "countInFailed": "Conteggio audio non disponibile. Termina la pratica e riprova senza conteggio.",
+    "launch": "Practice a phrase",
+    "finish": "Fine pratica",
+    "start": "Inizia pratica",
+    "selectStart": "Seleziona la battuta iniziale",
+    "selectEnd": "Seleziona la battuta finale",
+    "clickHint": "Clicca direttamente sulla partitura.",
+    "endBeforeStart": "La fine deve coincidere con l’inizio o seguirlo.",
+    "phraseSummary": "{{track}} · battute {{from}}–{{to}}",
+    "startPass": "Passaggio iniziale",
+    "endPass": "Passaggio finale",
+    "contextAvailable": "Contesto: {{count}} battute precedenti",
+    "restart": "Ricomincia",
+    "cancel": "Annulla"
+  },
   "fretboard": {
     "effects": {"hammerOn": "Hammer-on", "pullOff": "Pull-off","title": "Effetti delle note", "position": "Corda {{string}}, tasto {{fret}}", "bend": "Bending", "tones": "toni", "vibrato": "Vibrato", "vibratoWide": "Vibrato ampio", "slide": "Slide", "legatoSlide": "Slide legato", "pickSlide": "Pick slide", "in": "in entrata", "out": "in uscita"},
     "notes": {"0": "C", "1": "C♯", "2": "D", "3": "D♯", "4": "E", "5": "F", "6": "F♯", "7": "G", "8": "G♯", "9": "A", "10": "A♯", "11": "B"},

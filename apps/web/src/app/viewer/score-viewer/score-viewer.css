@@ -2,3 +2,6 @@
 
 .fretboard-panel { border-top: 1px solid var(--border); }
 .fretboard-panel summary { cursor: pointer; padding: 8px 12px; }
+.practice-toggle { color: var(--accent); font-weight: 650; }
+.practice-toggle[aria-pressed='true'] { background: var(--accent-soft); border-radius: 6px 6px 0 0; }
+.view-modes { flex-wrap: wrap; min-width: 0; }

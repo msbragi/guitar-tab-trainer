@@ -6,9 +6,10 @@ import { ScoreSession } from '../../score-session.js';
 import { Icon } from '../../shared/icon/icon.js';
 
 import { Fretboard } from '../fretboard/fretboard.js';
+import { PracticePanel } from '../../practice/practice-panel/practice-panel.js';
 
 @Component({
-  selector: 'gp-score-viewer', imports: [TranslocoPipe, Icon, Fretboard],
+  selector: 'gp-score-viewer', imports: [TranslocoPipe, Icon, Fretboard, PracticePanel],
   templateUrl: './score-viewer.html',
   styleUrl: './score-viewer.css',
 })

@@ -7,7 +7,7 @@
       <fieldset [disabled]="!ready()">
         <legend class="visually-hidden">{{ 'transport.title' | transloco }}</legend>
         <div class="transport-buttons">
-          <button class="round-button play-button" type="button" (click)="state().status === 'playing' ? session.pause() : session.play()"
+          <button class="round-button play-button" type="button" [disabled]="session.countInRemaining() !== null" (click)="state().status === 'playing' ? session.pause() : session.play()"
             [title]="(state().status === 'playing' ? 'transport.pause' : 'transport.play') | transloco"
             [attr.aria-label]="(state().status === 'playing' ? 'transport.pause' : 'transport.play') | transloco">
             <gp-icon [name]="state().status === 'playing' ? 'pause' : 'play'" /></button>
@@ -15,13 +15,13 @@
             [attr.aria-label]="'transport.stop' | transloco"><gp-icon name="stop" /></button>
         </div>
         <div class="timeline"><span>{{ time(state().timeMs) }} / {{ time(state().durationMs) }}</span>
-          <input #timeline type="range" min="0" [max]="state().endTick || 1" step="1" [value]="state().tick"
+          <input #timeline type="range" [min]="practiceRange()?.playbackStartTick ?? 0" [max]="practiceRange() ? practiceRange()!.endTick - 1 : state().endTick || 1" step="1" [value]="state().tick"
             (input)="session.seek(+timeline.value)" [title]="'transport.timeline' | transloco" [attr.aria-label]="'transport.timeline' | transloco"></div>
         <div class="loop-controls" aria-describedby="loop-help">
-          <button class="control-button" type="button" (click)="session.toggleLoop()" [attr.aria-pressed]="state().loop"
+          <button class="control-button" type="button" [disabled]="session.practiceFlow().phase !== 'idle'" (click)="session.toggleLoop()" [attr.aria-pressed]="state().loop"
             [title]="'transport.loop' | transloco" [attr.aria-label]="'transport.loop' | transloco"><gp-icon name="loop" /></button>
-          <button class="control-button" type="button" (click)="session.setLoopPoint('a')" [title]="'transport.loopA' | transloco" [attr.aria-label]="'transport.loopA' | transloco">A</button>
-          <button class="control-button" type="button" (click)="session.setLoopPoint('b')" [title]="'transport.loopB' | transloco" [attr.aria-label]="'transport.loopB' | transloco">B</button>
+          <button class="control-button" type="button" [disabled]="session.practiceFlow().phase !== 'idle'" (click)="session.setLoopPoint('a')" [title]="'transport.loopA' | transloco" [attr.aria-label]="'transport.loopA' | transloco">A</button>
+          <button class="control-button" type="button" [disabled]="session.practiceFlow().phase !== 'idle'" (click)="session.setLoopPoint('b')" [title]="'transport.loopB' | transloco" [attr.aria-label]="'transport.loopB' | transloco">B</button>
           <span class="loop-summary" [title]="'transport.loopHint' | transloco">A {{ percent(state().a) }}% · B {{ percent(state().b) }}%</span>
         </div>
         <label class="transport-field speed-field"><span>{{ 'transport.speed' | transloco }}</span>
