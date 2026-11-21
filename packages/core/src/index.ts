@@ -10,3 +10,17 @@ export { practiceRange } from './practice.js';
 export type { PlaybackBar, PracticeSelection, PracticeRange } from './practice.js';
 export { pickPracticeBar } from './practice-flow.js';
 export type { PracticeFlow, PracticeBarPick } from './practice-flow.js';
+export { DEFAULT_AUDIO_TO_MIDI_CONFIG, suggestGuitarPosition } from './audio-conversion.js';
+export type {
+  AudioConversionMode,
+  AudioVerificationQuality,
+  PitchBendRangeSemitones,
+  MonoDetectionWindow,
+  AudioToMidiConfig,
+  SampledMidiEvent,
+  TranscribedNote,
+  GuitarFretPosition,
+  TunerReading,
+  AudioToMidiTelemetry,
+  AudioToMidiPort,
+} from './audio-conversion.js';

@@ -7,14 +7,12 @@ import { LibraryPanel } from '../layout/library-panel/library-panel.js';
 import { TracksPanel } from '../layout/tracks-panel/tracks-panel.js';
 import { TransportBar } from '../layout/transport-bar/transport-bar.js';
 import { SettingsPanel } from '../layout/settings-panel/settings-panel.js';
-import { sections } from '../layout/navigation.js';
 import type { Section } from '../layout/navigation.js';
 import { ScoreViewer } from '../viewer/score-viewer/score-viewer.js';
-import { Icon } from '../shared/icon/icon.js';
 
 @Component({
   selector: 'gp-app',
-  imports: [TranslocoPipe, AppHeader, LibraryPanel, TracksPanel, TransportBar, SettingsPanel, ScoreViewer, Icon],
+  imports: [TranslocoPipe, AppHeader, LibraryPanel, TracksPanel, TransportBar, SettingsPanel, ScoreViewer],
   templateUrl: './app.html',
   styleUrl: './app.css',
 })
@@ -23,7 +21,6 @@ export class App {
   readonly section = signal<Section>('practice');
   readonly sidebarCollapsed = signal(false);
   readonly tracksCollapsed = signal(false);
-  readonly sectionIcon = computed(() => sections.find((item) => item.id === this.section())!.icon);
   readonly tracks = computed(() => { const state = this.session.state(); return state.status === 'ready' ? state.score.tracks : []; });
   private readonly document = inject(DOCUMENT);
   private readonly fileInput = viewChild.required<ElementRef<HTMLInputElement>>('fileInput');

@@ -1,19 +1,26 @@
+<header class="app-header">
+  <button type="button" class="brand brand-button" [title]="'nav.practice' | transloco" (click)="goHome()">
+    <span class="brand-mark"><gp-icon name="guitar" /></span>
+    <div class="brand-copy">
+      <div class="brand-title"><h1>{{ 'app.name' | transloco }}</h1><span class="version">v{{ version }}</span></div>
+      <p>{{ 'shell.tagline' | transloco }}</p>
+    </div>
+  </button>
 
-    <header class="app-header">
-      <div class="brand"><span class="brand-mark"><gp-icon name="guitar" /></span>
-        <div><div class="brand-title"><h1>{{ 'app.name' | transloco }}</h1><span class="version">v{{ version }}</span></div>
-          <p>{{ 'shell.tagline' | transloco }}</p></div>
-      </div>
-      <button class="icon-button mobile-menu" type="button" [attr.aria-label]="'shell.toggleNavigation' | transloco" [title]="'shell.toggleNavigation' | transloco"
-        [attr.aria-expanded]="menuOpen()" aria-controls="primary-navigation" (click)="menuOpen.set(!menuOpen())"><gp-icon name="menu" /></button>
-      <nav id="primary-navigation" class="primary-navigation" [class.menu-open]="menuOpen()" [attr.aria-label]="'shell.navigation' | transloco">
-        @for (item of sections; track item.id) {
-          <button type="button" [title]="('nav.' + item.id) | transloco" [class.active]="active() === item.id" [attr.aria-current]="active() === item.id ? 'page' : null"
-            (click)="choose(item.id)"><gp-icon [name]="item.icon" /><span>{{ ('nav.' + item.id) | transloco }}</span></button>
-        }
-      </nav>
-      <div class="language-picker" role="group" [attr.aria-label]="'language.label' | transloco">
-        <button type="button" lang="en" [title]="'language.english' | transloco" [attr.aria-pressed]="language.current() === 'en'" (click)="language.select('en')">EN</button>
-        <button type="button" lang="it" [title]="'language.italian' | transloco" [attr.aria-pressed]="language.current() === 'it'" (click)="language.select('it')">IT</button>
-      </div>
-    </header>
+  <div class="header-center" aria-hidden="true"></div>
+
+  <div class="header-actions">
+    <div class="language-picker" role="group" [attr.aria-label]="'language.label' | transloco">
+      <button type="button" lang="en" [title]="'language.english' | transloco" [attr.aria-pressed]="language.current() === 'en'" (click)="language.select('en')">EN</button>
+      <button type="button" lang="it" [title]="'language.italian' | transloco" [attr.aria-pressed]="language.current() === 'it'" (click)="language.select('it')">IT</button>
+    </div>
+    <button type="button" class="icon-button settings-toggle"
+      [class.active]="active() === 'settings'"
+      [attr.aria-label]="'nav.settings' | transloco"
+      [title]="'nav.settings' | transloco"
+      [attr.aria-pressed]="active() === 'settings'"
+      (click)="toggleSettings()">
+      <gp-icon name="settings" />
+    </button>
+  </div>
+</header>

@@ -1,1 +1,91 @@
 /* Shared styles are defined in src/styles.css. */
+.project-list {
+  list-style: none;
+  margin: 8px 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.project-item {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  border-radius: 6px;
+  padding: 2px 4px;
+  border: 1px solid transparent;
+}
+
+.project-item.active {
+  background: var(--accent-soft);
+  border-color: var(--accent);
+}
+
+.project-open {
+  flex: 1 1 auto;
+  min-width: 0;
+  text-align: left;
+  background: transparent;
+  border: 0;
+  color: var(--text);
+  padding: 4px;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.project-title {
+  font-size: 12px;
+  font-weight: 500;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.project-meta {
+  font-size: 10px;
+  color: var(--muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.project-action {
+  width: 24px;
+  height: 24px;
+  flex: 0 0 auto;
+  font-size: 14px;
+  line-height: 1;
+}
+
+.project-action.is-favorite {
+  color: var(--accent);
+}
+
+.project-delete {
+  color: var(--muted);
+}
+
+.library-bundle-actions {
+  margin-top: 18px;
+  padding-top: 14px;
+  border-top: 1px solid var(--border);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.bundle-button {
+  flex: 1 1 auto;
+  font-size: 11px;
+  padding: 6px 8px;
+}
+
+.import-error {
+  width: 100%;
+  margin: 4px 0 0;
+  font-size: 11px;
+  color: var(--danger);
+}

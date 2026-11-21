@@ -10,14 +10,6 @@
       <gp-score-viewer [class.inactive]="section() !== 'practice'" [attr.aria-hidden]="section() !== 'practice' ? 'true' : null"
         [attr.inert]="section() !== 'practice' ? '' : null" (openTab)="chooseFile()" />
       @if (section() === 'settings') { <gp-settings-panel /> }
-      @else if (section() !== 'practice') {
-        <section class="section-page" [attr.aria-label]="('nav.' + section()) | transloco">
-          <span class="section-symbol"><gp-icon [name]="sectionIcon()" /></span><p class="eyebrow">{{ 'shell.comingLater' | transloco }}</p>
-          <h2>{{ ('nav.' + section()) | transloco }}</h2>
-          <p class="section-description">{{ ('shell.' + section() + 'Unavailable') | transloco }}</p>
-          <button class="secondary-button" type="button" [title]="'shell.backToPractice' | transloco" (click)="section.set('practice')">{{ 'shell.backToPractice' | transloco }}</button>
-        </section>
-      }
     </main>
     <gp-tracks-panel [collapsed]="tracksCollapsed()" [tracks]="tracks()" [scoreState]="session.state()" [mixer]="session.mixer()" [hiddenTracks]="session.hiddenTracks()" [viewBusy]="session.viewBusy()"
       (visibility)="session.toggleTrackVisibility($event)" (reset)="session.resetTracks()"

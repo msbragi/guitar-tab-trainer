@@ -1,7 +1,6 @@
 import type { IconName } from '../shared/icon/icon.js';
-export type Section = 'practice' | 'library' | 'projects' | 'rig' | 'settings';
+export type Section = 'practice' | 'settings';
 export const sections: readonly { id: Section; icon: IconName }[] = [
-  { id: 'practice', icon: 'play' }, { id: 'library', icon: 'folder' },
-  { id: 'projects', icon: 'layers' }, { id: 'rig', icon: 'rig' },
+  { id: 'practice', icon: 'play' },
   { id: 'settings', icon: 'settings' },
 ];

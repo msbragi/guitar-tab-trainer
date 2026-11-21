@@ -10,5 +10,12 @@ input[type='checkbox'] { accent-color: var(--accent); }
 select { font-size: 11px; padding: 5px 8px; }
 .primary-button { padding: 7px 12px; }
 .selection-actions { display: flex; gap: 8px; margin-left: auto; }
-.text-button { background: transparent; color: var(--text); border: 1px solid var(--border); border-radius: 5px; padding: 6px 8px; font-size: 11px; }
+.text-button { background: transparent; color: var(--text); border: 1px solid var(--border); border-radius: 5px; padding: 6px 8px; font-size: 11px; cursor: pointer; }
 .error-message { color: var(--danger); font-size: 11px; }
+.variant-toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; width: 100%; padding-top: 4px; border-top: 1px solid var(--border); }
+.record-button { background: transparent; color: var(--danger); border: 1px solid var(--danger); border-radius: 5px; padding: 6px 10px; font-size: 11px; font-weight: 600; cursor: pointer; }
+.record-button.recording { background: var(--danger); color: #fff; }
+.variant-pills { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; }
+.pill-button { background: var(--surface); color: var(--text); border: 1px solid var(--border); border-radius: 999px; padding: 4px 10px; font-size: 11px; cursor: pointer; }
+.pill-button.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+.capture-meter { font-size: 11px; color: var(--muted); font-variant-numeric: tabular-nums; margin-left: auto; }

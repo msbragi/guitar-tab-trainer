@@ -48,6 +48,57 @@
         }
       </span>
       @if (session.countInFailed()) { <span class="error-message" role="alert">{{ 'practice.countInFailed' | transloco }}</span> }
+
+      <div class="variant-toolbar">
+        <button type="button" class="text-button" [disabled]="!ready()" (click)="session.saveCurrentPhrase()">
+          {{ (session.activePhrase() ? 'practice.phraseSaved' : 'practice.savePhrase') | transloco }}
+        </button>
+
+        @if (session.isRecordingTake()) {
+          <button type="button" class="record-button recording" (click)="session.stopRecordTake()">
+            ■ {{ 'practice.stopRecord' | transloco }}
+          </button>
+        } @else {
+          <button type="button" class="record-button" [disabled]="!ready()" (click)="session.startRecordTake()">
+            ● {{ 'practice.recordTake' | transloco }}
+          </button>
+        }
+
+        <button type="button" class="text-button" [attr.aria-pressed]="session.captureStatus().monitor" (click)="session.toggleMonitorInput()">
+          {{ (session.captureStatus().monitor ? 'practice.monitorOn' : 'practice.monitorOff') | transloco }}
+        </button>
+
+        <button type="button" class="text-button" [disabled]="!ready()" (click)="session.createVariantFromOriginal()">
+          + {{ 'practice.newVariant' | transloco }}
+        </button>
+
+        @if (variants().length) {
+          <div class="variant-pills" role="group" [attr.aria-label]="'practice.variantView' | transloco">
+            <button type="button" class="pill-button" [class.active]="activeVariantId() === null"
+              [attr.aria-pressed]="activeVariantId() === null" (click)="session.selectVariant(null)">
+              {{ 'practice.originalGp' | transloco }}
+            </button>
+            @for (variant of variants(); track variant.id) {
+              <button type="button" class="pill-button" [class.active]="activeVariantId() === variant.id"
+                [attr.aria-pressed]="activeVariantId() === variant.id" (click)="session.selectVariant(variant.id)">
+                {{ variant.name }}
+              </button>
+            }
+          </div>
+        }
+
+        @if (session.captureStatus().active) {
+          <span class="capture-meter" aria-live="off">
+            {{ session.captureStatus().levelDb.toFixed(0) }} dB
+            @if (session.captureStatus().tuner; as tuner) {
+              · {{ tuner.hz.toFixed(1) }} Hz ({{ tuner.cents >= 0 ? '+' : '' }}{{ tuner.cents.toFixed(0) }}¢)
+            }
+          </span>
+        }
+        @if (session.captureStatus().error) {
+          <span class="error-message" role="alert">{{ 'practice.micUnavailable' | transloco }}</span>
+        }
+      </div>
     } @else if (stage !== 'start') {
       <div class="selection-actions">
         <button type="button" class="text-button" [disabled]="session.viewBusy()" (click)="session.restartPracticeSelection()">{{ 'practice.restart' | transloco }}</button>

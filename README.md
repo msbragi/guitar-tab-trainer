@@ -8,7 +8,7 @@ The goal is to provide an environment for learning guitar parts through interact
 
 The project is also an experiment in AI-assisted software development, with human supervision of architectural decisions and validation.
 
-**Current status:** M0–M3 are complete. **M4 — Playback & Fretboard** is functionally complete, with refinements and manual verification still open. It includes synthesized playback, mixer, bidirectional score synchronization, current-session recovery, and a synchronized fretboard with animated articulations. **M5 — Guitar Capture & Play Session** is next. **M6 — Storage & Projects** will follow, with storage technology open. See [TODO.md](TODO.md).
+**Current status:** M0–M3 are complete. **M4 — Playback & Fretboard**, **M5 — Guitar Capture & Play Session**, and **M6 — Storage & Projects** are functionally implemented, with manual browser verification, real-guitar device calibration, and historical Playwright test debt still open. See [TODO.md](TODO.md) and [docs/M5_M6_PLAN.md](docs/M5_M6_PLAN.md).
 
 ## Development Environment
 
@@ -60,15 +60,14 @@ The production client build is generated in:
 
 The layout follows [the design reference](docs/GTT-UI.png) with standalone Angular components and shared CSS design tokens, without an additional UI framework.
 
-- Header with a guitar mark, application name/version, active section, EN/IT selector, and collapsible mobile navigation.
-- Practice, Library, Projects, Virtual Rig, and Settings navigation. Navigation is local UI state; no URL router is introduced for unfinished sections.
-- Collapsible file sidebar with Open Tab. Recent files and favorites are explicitly unavailable placeholders, with no fictitious entries or musical-library persistence.
-- Expandable song information above the mixer in the right sidebar, and a central alphaTab viewer. The viewer stays mounted across section changes, retaining the loaded document and renderer.
+- Compact top header with a guitar mark and application name/version (click to return to Practice), an open center area reserved for future tools, an EN/IT language selector, and a Settings gear icon toggle on the right. Navigation is local UI state; dead placeholder tabs have been removed.
+- Collapsible left **Library** sidebar with Open Tab, **Recent Files**, **Favorites** (star toggle), **Saved Phrases** for the active project, and **Export / Import Project** (`.gtt.json`).
+- Expandable song information above the mixer in the right sidebar, and a central alphaTab viewer. The viewer stays mounted across Settings toggles, retaining the loaded document and renderer.
 - Score & Tab, Tab Only, and Notation Only modes; zoom at 75%, 100%, 125%, and 150%; browser fullscreen where supported.
 - Track panel populated exclusively from the loaded score, with mute/unmute, cumulative solo/unsolo, and independent track volume through the alphaTab synthesizer.
 - Permanent bottom transport area with synthesized playback, timeline, A/B loop, speed, and read-only tempo. Master volume is active; the desktop transport uses a compact horizontal layout and wraps on smaller screens.
 
-Library, Projects, and Virtual Rig pages explain that their future functionality is unavailable. Settings currently implements appearance preferences. Playback uses the real alphaTab synthesizer. Rig, library, and project workflows remain unavailable.
+Settings currently implements appearance preferences. Playback uses the real alphaTab synthesizer. Virtual Rig / VST3 hosting remains future work.
 
 On small screens the side panels start collapsed and expand over the workspace. The notation paper retains a minimum width of 720px and scrolls inside the viewer, preserving musical readability without causing horizontal page overflow. The paper stays light in dark mode.
 
@@ -147,18 +146,19 @@ Core and adapter errors expose language-independent `ScoreLoadError` codes. The 
 
 The operating system's native file picker retains its browser/system language. The application's file control and messages use the selected UI language.
 
-### Next milestones
+### Implemented — M5 (Guitar Capture & Play Session)
 
-M5 will introduce work sessions on selected measures, original accompaniment,
-real-guitar recording limited to the selected segment, and playback starting
-before that segment. Audio will be converted into musical events and tablature
-through a replaceable Audio → MIDI engine. Hendrix is the first candidate to
-evaluate. The fretboard will support note review and correction, with the
-original phrase and its variants kept separate.
+- Guided IN/OUT measure selection directly on the score, fragment view using public alphaTab APIs, configurable lead-in context bars, and audio count-in.
+- Engine-agnostic `AudioToMidiPort` contract in `@guitar-practice/core` with a pure TypeScript DSP engine in `@guitar-practice/audio-engine` (MIT port of Hendrix DSP + Mobile Bonus: `HendrixAudioToMidiEngine`, `MidiRecording.toSmf`, `extractNotes`, live tuner).
+- Browser Web Audio capture (`apps/web/src/app/practice/guitar-capture.ts`, independent of Angular) with Monitor Input ON/OFF toggle, live input level/tuner readout, and MIDI capture strictly windowed between Punch-In and Punch-Out.
+- Phrase saving, real-guitar take recording (`● Record Take`), and offline variant creation (`+ New Variant` cloning the original GP fragment) without ever mutating the original Guitar Pro file.
+- Variant view selector (`Original GP` vs `Take 1`, `Take 2`, ...) and interactive Fretboard editing (click string/fret while paused or stopped to add, move, or remove variant notes) with **Undo / Redo** and dashed ghost markers for differing original GP notes.
 
-M6 will address persistent songs, work sessions, recordings and variants.
-Storage technology will be selected then. The M4 current-session recovery
-remains the existing browser feature.
+### Implemented — M6 (Storage & Projects)
+
+- Domain models, deterministic score identity (`computeScoreContentId`), immutable variant editor with Undo/Redo, and portable `.gtt.json` bundle export/import in `@guitar-practice/study-project`.
+- Browser `IndexedDbStudyProjectStore` (`guitar-practice-projects-v1` with `projects`, `scores`, and `media` object stores, separate from M4's current-session recovery database) with transparent fallback to `InMemoryStudyProjectStore`.
+- Left Library sidebar wired to persistent projects: **Recent Files**, **Favorites**, **Saved Phrases** (one-click activation), and **Export / Import Project**.
 
 ## Local Assets and Offline Operation
 
@@ -188,7 +188,7 @@ pnpm typecheck
 pnpm build
 ```
 
-`pnpm test` runs architectural boundary checks and Node.js tests for the core, alphaTab adapter, UI language/theme preferences, and translation catalogues.
+`pnpm test` runs architectural boundary checks and Node.js tests for `core`, `audio-engine`, `study-project`, `alphatab-adapter`, and `web` (including IndexedDB project store, practice session, preferences, and EN/IT translation catalogues).
 
 `pnpm typecheck` validates production TypeScript sources.
 
@@ -250,6 +250,14 @@ Application state, orchestration, and public contracts.
 
 No dependencies on Angular, alphaTab, or browser DOM APIs.
 
+### `packages/audio-engine`
+
+Pure TypeScript Audio → MIDI DSP engine (MIT port of Hendrix DSP + Mobile Bonus) implementing `AudioToMidiPort` from `@guitar-practice/core`. Includes `HendrixAudioToMidiEngine`, `HendrixProcessor`, `HendrixMidiReader`, `MidiRecording.toSmf`, `extractNotes`, and live tuner analysis.
+
+### `packages/study-project`
+
+Pure TypeScript domain models and logic for M5/M6: `StudyProject`, `PracticePhrase`, `PhraseVariant`, `VariantNote`, `StudyProjectStoragePort`, `InMemoryStudyProjectStore`, immutable fretboard `VariantEditorState` (Undo/Redo), deterministic `computeScoreContentId`, and portable `.gtt.json` bundle export/import.
+
 ### `packages/alphatab-adapter`
 
 Implements the core contracts and encapsulates alphaTab through its public APIs.
@@ -260,21 +268,19 @@ Angular application responsible for presentation, user interaction, internationa
 
 No direct alphaTab imports.
 
-The root `App` composes standalone components in `layout/` and `viewer/`. `ScoreSession` is a UI composition service around the existing core controller and adapter; it manages presentation commands without adding musical logic to presentational components. Theme and language preferences live in UI services.
+The root `App` composes standalone components in `layout/`, `practice/`, and `viewer/`. `ScoreSession` is a UI composition service around the core controllers, adapter, IndexedDB stores, and browser audio capture; it manages presentation commands without adding musical logic to presentational components. Theme and language preferences live in UI services.
 
 The adapter exposes a plain `ScoreViewMode` contract without exporting alphaTab model types. Display changes use public `Staff.showStandardNotation` / `Staff.showTablature`, `settings.display.scale`, `updateSettings()`, and `render()` on the in-memory document. Original GP files are never rewritten. Tracks without strings retain standard notation in Tab Only mode. The deprecated `display.staveProfile` setting is not used.
 
 Shared packages expose only their compiled public entry points through `dist`.
 
-The root `angular.json` configures only `apps/web`. The two TypeScript packages use `tsc` and are not Angular projects.
+The root `angular.json` configures only `apps/web`. The shared TypeScript packages use `tsc` and are not Angular projects.
 
 Architectural boundaries can be checked with:
 
 ```sh
 pnpm check:boundaries
 ```
-
-The existing `audio-engine` and `study-project` directories are reserved for future development and are not currently active workspace packages.
 
 No backend, native Audio Engine, or desktop runtime has been introduced.
 
@@ -284,19 +290,16 @@ No backend, native Audio Engine, or desktop runtime has been introduced.
 - Performance with large scores has not been measured.
 - The verified test corpus covers GP3, GP5, and GP7; GP4 and GPX remain untested.
 - Successful SVG rendering and metadata extraction do not guarantee complete fidelity of musical effects.
-- General manual acceptance is recorded; detailed musical fidelity, loop artifacts, device/browser coverage and native-device latency are not certified. Synchronized backing tracks are not implemented.
+- Real-guitar audio capture, latency alignment, and Audio → MIDI conversion quality require manual testing and calibration on real instruments/audio interfaces.
+- Synchronized external backing audio tracks and Virtual Rig / VST3 hosting are not implemented.
 - Historical browser failures and the later refresh-test assertion remain verification debt. See the M4 document for the fixture and selector limitations.
-- The current GP and its state are recovered through IndexedDB. Persistent study projects are planned for M6, with storage technology open.
-- No native audio device integration.
-- No desktop packaging.
+- No native audio device integration or desktop packaging.
 
 ## Roadmap
 
 Development milestones and their current status are tracked in [TODO.md](TODO.md).
 
-For the current state, manual acceptance, automated-test debt, environment details and restart instructions, read [docs/SESSION_HANDOFF.md](docs/SESSION_HANDOFF.md). The next-session prompt and M5 analysis checklist are in [docs/M5_START.md](docs/M5_START.md).
-
-Next is M5 Guitar Capture & Play Session, delivered progressively from an agreed first increment. Hendrix is a candidate for replaceable Audio → MIDI conversion. M6 will design project storage. Earlier PCM/MIDI/prerendering plans are preserved as technical history in [docs/HISTORY.md](docs/HISTORY.md).
+For the M5/M6 implementation plan, see [docs/M5_M6_PLAN.md](docs/M5_M6_PLAN.md). Earlier technical history and session handoff notes are preserved in [docs/HISTORY.md](docs/HISTORY.md) and [docs/SESSION_HANDOFF.md](docs/SESSION_HANDOFF.md).
 
 ## Licensing
 

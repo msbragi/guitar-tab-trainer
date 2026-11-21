@@ -1,15 +1,118 @@
+<aside class="side-panel library-panel" [class.collapsed]="collapsed()" [attr.aria-label]="'shell.libraryPanel' | transloco">
+  <div class="panel-top">
+    <span class="panel-caption">{{ 'nav.library' | transloco }}</span>
+    <button class="icon-button" type="button"
+      [attr.aria-label]="(collapsed() ? 'shell.expandLibrary' : 'shell.collapseLibrary') | transloco"
+      [title]="(collapsed() ? 'shell.expandLibrary' : 'shell.collapseLibrary') | transloco"
+      [attr.aria-expanded]="!collapsed()" aria-controls="library-panel-content"
+      (click)="toggle.emit()">
+      <gp-icon [name]="collapsed() ? 'right' : 'left'" />
+    </button>
+  </div>
 
-    <aside class="side-panel library-panel" [class.collapsed]="collapsed()" [attr.aria-label]="'shell.libraryPanel' | transloco">
-      <div class="panel-top"><span class="panel-caption">{{ 'nav.library' | transloco }}</span>
-        <button class="icon-button" type="button" [attr.aria-label]="(collapsed() ? 'shell.expandLibrary' : 'shell.collapseLibrary') | transloco"
-          [title]="(collapsed() ? 'shell.expandLibrary' : 'shell.collapseLibrary') | transloco" [attr.aria-expanded]="!collapsed()" aria-controls="library-panel-content" (click)="toggle.emit()"><gp-icon [name]="collapsed() ? 'right' : 'left'" /></button></div>
-      <button class="primary-button open-tab" type="button" [disabled]="busy()" [attr.aria-label]="'shell.openTab' | transloco" [title]="'shell.openTab' | transloco" (click)="openTab.emit()">
-        <gp-icon name="folder" /><span>{{ 'shell.openTab' | transloco }}</span></button>
-      <div id="library-panel-content" [hidden]="collapsed()">
-        <section class="library-section"><h3><gp-icon name="clock" />{{ 'shell.recent' | transloco }}</h3>
-          <p class="empty-panel">{{ 'shell.recentUnavailable' | transloco }}</p></section>
-        <section class="library-section"><h3><gp-icon name="star" />{{ 'shell.favorites' | transloco }}</h3>
-          <p class="empty-panel">{{ 'shell.favoritesUnavailable' | transloco }}</p></section>
-        <div class="local-note"><span class="status-dot"></span>{{ 'footer.local' | transloco }}<p>{{ 'file.hint' | transloco }}</p></div>
-      </div>
-    </aside>
+  <button class="primary-button open-tab" type="button" [disabled]="busy()"
+    [attr.aria-label]="'shell.openTab' | transloco" [title]="'shell.openTab' | transloco"
+    (click)="openTab.emit()">
+    <gp-icon name="folder" /><span>{{ 'shell.openTab' | transloco }}</span>
+  </button>
+
+  <div id="library-panel-content" [hidden]="collapsed()">
+    <section class="library-section">
+      <h3><gp-icon name="clock" />{{ 'shell.recent' | transloco }}</h3>
+      @if (recentProjects().length) {
+        <ul class="project-list">
+          @for (project of recentProjects(); track project.id) {
+            <li class="project-item" [class.active]="project.id === activeProjectId()">
+              <button type="button" class="project-open" [disabled]="busy()"
+                [title]="project.fileName" (click)="session.openSavedProject(project.id)">
+                <span class="project-title">{{ project.title || project.fileName }}</span>
+                @if (project.artist) {
+                  <span class="project-meta">{{ project.artist }}</span>
+                }
+              </button>
+              <button type="button" class="icon-button project-action"
+                [class.is-favorite]="project.favorite"
+                [attr.aria-label]="'library.toggleFavorite' | transloco"
+                [title]="'library.toggleFavorite' | transloco"
+                [attr.aria-pressed]="project.favorite"
+                (click)="session.toggleProjectFavorite(project.id)">
+                <gp-icon name="star" />
+              </button>
+              <button type="button" class="icon-button project-action project-delete"
+                [attr.aria-label]="'library.deleteProject' | transloco"
+                [title]="'library.deleteProject' | transloco"
+                (click)="session.deleteSavedProject(project.id)">
+                ×
+              </button>
+            </li>
+          }
+        </ul>
+      } @else {
+        <p class="empty-panel">{{ 'library.recentEmpty' | transloco }}</p>
+      }
+    </section>
+
+    <section class="library-section">
+      <h3><gp-icon name="star" />{{ 'shell.favorites' | transloco }}</h3>
+      @if (favoriteProjects().length) {
+        <ul class="project-list">
+          @for (project of favoriteProjects(); track project.id) {
+            <li class="project-item" [class.active]="project.id === activeProjectId()">
+              <button type="button" class="project-open" [disabled]="busy()"
+                [title]="project.fileName" (click)="session.openSavedProject(project.id)">
+                <span class="project-title">{{ project.title || project.fileName }}</span>
+              </button>
+              <button type="button" class="icon-button project-action is-favorite"
+                [attr.aria-label]="'library.toggleFavorite' | transloco"
+                [title]="'library.toggleFavorite' | transloco"
+                [attr.aria-pressed]="true"
+                (click)="session.toggleProjectFavorite(project.id)">
+                <gp-icon name="star" />
+              </button>
+            </li>
+          }
+        </ul>
+      } @else {
+        <p class="empty-panel">{{ 'library.favoritesEmpty' | transloco }}</p>
+      }
+    </section>
+
+    @if (savedPhrases().length) {
+      <section class="library-section">
+        <h3><gp-icon name="play" />{{ 'library.savedPhrases' | transloco }}</h3>
+        <ul class="project-list">
+          @for (phrase of savedPhrases(); track phrase.id) {
+            <li class="project-item" [class.active]="phrase.id === session.activePhrase()?.id">
+              <button type="button" class="project-open" [disabled]="busy()"
+                (click)="session.activateSavedPhrase(phrase.id)">
+                <span class="project-title">{{ phrase.name }}</span>
+                @if (phrase.variants.length) {
+                  <span class="project-meta">{{ 'library.variantsCount' | transloco: { count: phrase.variants.length } }}</span>
+                }
+              </button>
+            </li>
+          }
+        </ul>
+      </section>
+    }
+
+    <div class="library-bundle-actions">
+      <input #importInput type="file" accept=".gtt.json,.json" class="visually-hidden" (change)="onImportFile($event)">
+      @if (session.activeProject()) {
+        <button type="button" class="secondary-button bundle-button" [disabled]="busy()"
+          (click)="session.exportActiveProject()">
+          {{ 'library.exportProject' | transloco }}
+        </button>
+      }
+      <button type="button" class="secondary-button bundle-button" [disabled]="busy()"
+        (click)="triggerImport()">
+        {{ 'library.importProject' | transloco }}
+      </button>
+      @if (importError()) {
+        <p class="import-error" role="alert">{{ 'library.importFailed' | transloco }}</p>
+      }
+    </div>
+
+    <div class="local-note"><span class="status-dot"></span>{{ 'footer.local' | transloco }}<p>{{ 'file.hint' | transloco }}</p></div>
+  </div>
+</aside>

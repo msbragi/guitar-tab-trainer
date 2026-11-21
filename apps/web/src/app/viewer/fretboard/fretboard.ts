@@ -13,7 +13,7 @@ const pitchNames = ['C', 'C♯', 'D', 'D♯', 'E', 'F', 'F♯', 'G', 'G♯', 'A'
   styleUrl: './fretboard.css',
 })
 export class Fretboard {
-  private readonly session = inject(ScoreSession);
+  readonly session = inject(ScoreSession);
   readonly requestedTrack = model<number | null>(null);
   readonly tracks = computed(() => {
     const state = this.session.state();
@@ -27,6 +27,22 @@ export class Fretboard {
     const index = this.selectedTrack();
     return index === undefined ? null : this.session.fretboardFor(index);
   });
+  readonly isVariantView = computed(() => {
+    const index = this.selectedTrack();
+    const practice = this.session.practice();
+    return this.session.activeVariant() !== null && practice !== null && index === practice.trackIndex;
+  });
+  readonly canEditVariant = computed(() => {
+    const index = this.selectedTrack();
+    return index !== undefined && this.session.canEditFretboardVariant(index);
+  });
+  readonly variantNotes = computed(() => {
+    const index = this.selectedTrack();
+    return index === undefined ? [] : this.session.variantNotesAtCurrentTick(index);
+  });
+  readonly variantByCell = computed(
+    () => new Map(this.variantNotes().map((note) => [`${note.string}:${note.fret}`, note])),
+  );
   readonly frets = computed(() => {
     const positions = this.frame()?.positions ?? [];
     const destinations = positions.flatMap(({ gestures }) =>
@@ -64,6 +80,11 @@ export class Fretboard {
 
   pitchClass(midi: number): number {
     return (midi % 12 + 12) % 12;
+  }
+
+  onCellClick(variantString: number, fret: number): void {
+    if (!this.canEditVariant()) return;
+    void this.session.editVariantNoteOnFretboard(variantString, fret, this.frame()?.tuning);
   }
 
   pitchName(midi: number): string {

@@ -21,7 +21,17 @@
     "endPass": "End occurrence",
     "contextAvailable": "Context: {{count}} preceding bars",
     "restart": "Start over",
-    "cancel": "Cancel"
+    "cancel": "Cancel",
+    "savePhrase": "Save phrase",
+    "phraseSaved": "Phrase saved",
+    "recordTake": "Record Take",
+    "stopRecord": "Stop",
+    "monitorOn": "Monitor: ON",
+    "monitorOff": "Monitor: OFF",
+    "newVariant": "New Variant",
+    "variantView": "Variant view",
+    "originalGp": "Original GP",
+    "micUnavailable": "Microphone unavailable or permission denied."
   },
   "fretboard": {
     "effects": {"hammerOn": "Hammer-on", "pullOff": "Pull-off","title": "Note effects", "position": "String {{string}}, fret {{fret}}", "bend": "Bend", "tones": "tones", "vibrato": "Vibrato", "vibratoWide": "Wide vibrato", "slide": "Slide", "legatoSlide": "Legato slide", "pickSlide": "Pick slide", "in": "in", "out": "out"},
@@ -30,7 +40,9 @@
     "track": "Fretboard track",
     "capo": "Capo {{fret}}",
     "string": "String",
-    "unavailable": "This track has no fretted strings."
+    "unavailable": "This track has no fretted strings.",
+    "undo": "Undo",
+    "redo": "Redo"
   },
   "app": {
     "name": "Guitar Tab Trainer",
@@ -188,5 +200,16 @@
       "mixer-failed": "Unable to change the mixer. Try again or reopen the tablature.",
       "invalid-volume": "Volume must be between 0% and 100%."
     }
+  },
+  "library": {
+    "recentEmpty": "Opened tablatures will appear here.",
+    "favoritesEmpty": "Star a project to pin it here.",
+    "toggleFavorite": "Toggle favorite",
+    "deleteProject": "Delete project",
+    "savedPhrases": "Saved Phrases",
+    "variantsCount": "{{count}} variants",
+    "exportProject": "Export Project",
+    "importProject": "Import Project",
+    "importFailed": "Invalid or unsupported project bundle."
   }
 }

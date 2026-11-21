@@ -14,7 +14,9 @@
     "@angular/core": "21.2.26",
     "@angular/platform-browser": "21.2.26",
     "@guitar-practice/alphatab-adapter": "workspace:*",
+    "@guitar-practice/audio-engine": "workspace:*",
     "@guitar-practice/core": "workspace:*",
+    "@guitar-practice/study-project": "workspace:*",
     "@jsverse/transloco": "8.4.0",
     "rxjs": "7.8.2",
     "tslib": "2.8.1"

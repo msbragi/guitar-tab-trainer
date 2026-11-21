@@ -1,6 +1,6 @@
 # Guitar Tab Trainer — Roadmap e attività
 
-Stato consolidato sulla working tree del 19 novembre 2026.
+Stato consolidato sulla working tree del 21 novembre 2026.
 Questo file contiene la roadmap attiva. Lo storico essenziale è in
 [docs/HISTORY.md](docs/HISTORY.md), lo stato tecnico in
 [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
@@ -33,20 +33,19 @@ archi H/P. Questi riscontri coesistono con i debiti automatici documentati.
 
 ## M5 — Guitar Capture & Play Session
 
-**Da affrontare progressivamente.** Punto di partenza in
-[docs/M5_START.md](docs/M5_START.md).
+**Funzionalmente completata** (Step 1–6 di [docs/M5_M6_PLAN.md](docs/M5_M6_PLAN.md) implementati e verificati da build + 131 test Node), con verifica manuale nel browser e calibrazione su chitarra reale ancora aperte. Punto di partenza in [docs/M5_START.md](docs/M5_START.md).
 
 - [x] Analizzare il flusso e concordare un primo incremento.
 - [x] Selezionare un intervallo di battute e creare una sessione di lavoro con il synth GP e il mixer corrente (backing audio reale da concordare).
-- [ ] Consentire l'avvio del playback prima dell'intervallo e limitare la registrazione al segmento desiderato.
-- [ ] Acquisire la propria esecuzione sulla chitarra reale.
-- [ ] Convertire l'audio acquisito in eventi musicali e tablatura.
-- [ ] Valutare Hendrix come primo candidato per un motore Audio → MIDI sostituibile.
-- [ ] Consentire verifica e correzione delle note attraverso la fretboard.
-- [ ] Conservare separate la frase originale e le sue varianti.
-
-Dispositivi, allineamento audio/posizione musicale e qualità della conversione
-richiedono prove mirate. Hendrix è un candidato da valutare.
+- [x] Valutare Hendrix e convertire l'intero motore DSP + bonus mobile in TypeScript puro (`@guitar-practice/audio-engine`) dietro il contratto agnostico `AudioToMidiPort` (`@guitar-practice/core`).
+- [x] Definire i modelli di dominio per varianti, correzione note su fretboard con Undo/Redo e progetti in `@guitar-practice/study-project`.
+- [x] Consentire l'avvio del playback prima dell'intervallo e limitare la registrazione al segmento desiderato (`guitar-capture.ts`).
+- [x] Acquisire la propria esecuzione sulla chitarra reale e creare varianti della frase.
+- [x] Consentire verifica e correzione delle note attraverso la fretboard con Undo/Redo.
+- [x] Conservare separate la frase originale e le sue varianti.
+- [x] Razionalizzare la toolbar superiore: rimossi i tab placeholder e `[Practice]`/`[Settings]`, icona ingranaggio Settings a destra del selettore lingua, spazio centrale libero e altezza compatta.
+- [ ] Verificare nel browser il flusso varianti (`Save phrase`, `+ New Variant`, `● Record Take`, Monitor ON/OFF, tuner/livello) e l'editing interattivo sulla fretboard con Undo/Redo.
+- [ ] Calibrare latenza, allineamento audio/posizione musicale e qualità della conversione Audio → MIDI con chitarra reale e interfaccia audio.
 
 ### Primo incremento approvato — selezione e prova della frase
 
@@ -68,21 +67,17 @@ la sessione. Nessun tab aggiuntivo o finestra separata.
 - [x] Ascoltare una passata fino alla fine della frase usando il synth e il mixer esistenti, disattivando il loop senza perdere A/B.
 - [x] Invalidare la sessione al cambio documento; preservare GP e recupero M4.
 - [x] Verificare logica con test mirati (46 passati), build e confini.
-- [ ] Verifica UI e ascolto nel browser a cura dell’utente: due click, annullamento/ricomincia, frammento/zoom, contesto e countdown, Fine pratica/reset e ritorno ad A/B.
-
-Step successivi da concordare separatamente: registrazione simulata, applicazione
-della variante alla copia di lavoro e undo, poi acquisizione e trascrizione.
-Hendrix Moonshroom è utilizzabile come candidato nativo MIT; compatibilità
-browser e qualità non sono ancora validate. Nessuna nuova dipendenza nel primo incremento.
+- [x] Verifica UI e ascolto nel browser a cura dell’utente: due click, annullamento/ricomincia, frammento/zoom, contesto e countdown, Fine pratica/reset e ritorno ad A/B.
 
 ## M6 — Storage & Projects
 
-**Da progettare successivamente. Tecnologia di storage aperta.**
+**Funzionalmente completata** (contratti in `@guitar-practice/study-project` e adapter `IndexedDbStudyProjectStore` integrati in `apps/web`), con verifica manuale nel browser ancora aperta.
 
-- [ ] Definire la gestione persistente di brani, sessioni di lavoro, registrazioni e varianti.
-- [ ] Chiarire identità, relazioni e ciclo di vita delle risorse.
-- [ ] Valutare lo storage più appropriato e concordarne la scelta.
-- [ ] Definire recupero e conservazione dei dati dei progetti.
+- [x] Definire la gestione persistente di brani, sessioni di lavoro, registrazioni e varianti (`StudyProject`, `PracticePhrase`, `PhraseVariant`, `StudyProjectStoragePort`).
+- [x] Chiarire identità (`computeScoreContentId`), relazioni e ciclo di vita delle risorse + bundle portabile `.gtt.json`.
+- [x] Concordare IndexedDB multi-store (`projects`, `scores`, `media`) con fallback in-memory ed export/import portabile, più pulizia dei tab placeholder nella UI.
+- [x] Implementare `IndexedDbStudyProjectStore` e collegare la sidebar sinistra (`Recent Files`, `Favorites`, `Saved Phrases`, `Export/Import`) in `apps/web`.
+- [ ] Verificare nel browser persistenza IndexedDB tra reload, toggle preferiti, attivazione frasi salvate ed Export/Import `.gtt.json`.
 
 Il ripristino della sola sessione corrente in IndexedDB è già parte di M4.
 La scelta M6 riguarda la gestione persistente dei progetti.

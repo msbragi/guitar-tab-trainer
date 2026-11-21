@@ -21,7 +21,17 @@
     "endPass": "Passaggio finale",
     "contextAvailable": "Contesto: {{count}} battute precedenti",
     "restart": "Ricomincia",
-    "cancel": "Annulla"
+    "cancel": "Annulla",
+    "savePhrase": "Salva frase",
+    "phraseSaved": "Frase salvata",
+    "recordTake": "Registra Take",
+    "stopRecord": "Ferma",
+    "monitorOn": "Monitor: ON",
+    "monitorOff": "Monitor: OFF",
+    "newVariant": "Nuova Variante",
+    "variantView": "Vista variante",
+    "originalGp": "Originale GP",
+    "micUnavailable": "Microfono non disponibile o permesso negato."
   },
   "fretboard": {
     "effects": {"hammerOn": "Hammer-on", "pullOff": "Pull-off","title": "Effetti delle note", "position": "Corda {{string}}, tasto {{fret}}", "bend": "Bending", "tones": "toni", "vibrato": "Vibrato", "vibratoWide": "Vibrato ampio", "slide": "Slide", "legatoSlide": "Slide legato", "pickSlide": "Pick slide", "in": "in entrata", "out": "in uscita"},
@@ -30,7 +40,9 @@
     "track": "Traccia della tastiera",
     "capo": "Capotasto {{fret}}",
     "string": "Corda",
-    "unavailable": "Questa traccia non ha corde con tasti."
+    "unavailable": "Questa traccia non ha corde con tasti.",
+    "undo": "Annulla",
+    "redo": "Ripeti"
   },
   "app": {
     "name": "Guitar Tab Trainer",
@@ -188,5 +200,16 @@
       "mixer-failed": "Impossibile modificare il mixer. Riprova o riapri la tablatura.",
       "invalid-volume": "Il volume deve essere compreso tra 0% e 100%."
     }
+  },
+  "library": {
+    "recentEmpty": "Le tablature aperte appariranno qui.",
+    "favoritesEmpty": "Aggiungi una stella a un progetto per fissarlo qui.",
+    "toggleFavorite": "Attiva/disattiva preferito",
+    "deleteProject": "Elimina progetto",
+    "savedPhrases": "Frasi salvate",
+    "variantsCount": "{{count}} varianti",
+    "exportProject": "Esporta progetto",
+    "importProject": "Importa progetto",
+    "importFailed": "Bundle progetto non valido o non supportato."
   }
 }

@@ -11,6 +11,16 @@
         <span>{{ 'fretboard.capo' | transloco: { fret: current.capo } }}</span>
       }
     }
+    @if (isVariantView()) {
+      <div class="variant-undo-redo">
+        <button type="button" class="text-button" [disabled]="!session.canUndoVariant()" (click)="session.undoVariantEdit()">
+          {{ 'fretboard.undo' | transloco }}
+        </button>
+        <button type="button" class="text-button" [disabled]="!session.canRedoVariant()" (click)="session.redoVariantEdit()">
+          {{ 'fretboard.redo' | transloco }}
+        </button>
+      </div>
+    }
   </div>
   <div class="effect-status">
     @if (effectPositions().length) {
@@ -64,11 +74,26 @@
       <tbody>
         @for (pitch of current.tuning; track $index; let row = $index) {
           @let string = current.tuning.length - row;
+          @let variantString = row + 1;
           <tr>
             <th scope="row">{{ pitchName(pitch) }}</th>
             @for (fret of frets(); track fret) {
-              <td [class.nut]="fret === 0">
-                @if (active().has(string + ':' + fret)) {
+              @let variantNote = isVariantView() ? variantByCell().get(variantString + ':' + fret) : undefined;
+              @let hasOriginal = active().has(string + ':' + fret);
+              <td [class.nut]="fret === 0" [class.editable]="canEditVariant()" (click)="onCellClick(variantString, fret)">
+                @if (isVariantView()) {
+                  @if (variantNote) {
+                    <span class="fret-marker variant-marker" [class.is-edited]="variantNote.edited"
+                      [attr.data-string]="string" [attr.data-fret]="fret">
+                      <span class="fret-note">{{ ('fretboard.notes.' + pitchClass(pitch + fret + current.capo)) | transloco }}</span>
+                      <span class="fret-number">{{ fret }}</span>
+                    </span>
+                  } @else if (hasOriginal) {
+                    <span class="fret-marker original-ghost" [attr.data-string]="string" [attr.data-fret]="fret">
+                      <span class="fret-number">{{ fret }}</span>
+                    </span>
+                  }
+                } @else if (hasOriginal) {
                   <span class="fret-marker" [attr.data-string]="string" [attr.data-fret]="fret">
                     <span class="fret-note">{{ ('fretboard.notes.' + pitchClass(pitch + fret + current.capo)) | transloco }}</span>
                     <span class="fret-effects" aria-hidden="true">

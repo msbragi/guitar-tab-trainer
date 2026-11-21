@@ -84,3 +84,11 @@ td.nut { border-right: 3px solid var(--muted); }
 .gesture-target-label { fill: var(--muted); font-size: 10px; text-anchor: middle; dominant-baseline: central; }
 .gesture-target-note { fill: var(--muted); font-size: 9px; }
 .gesture-cursor { fill: var(--accent); stroke: var(--surface); stroke-width: 1px; vector-effect: non-scaling-stroke; }
+.variant-undo-redo { display: flex; align-items: center; gap: 4px; }
+.variant-undo-redo .text-button { padding: 3px 8px; font-size: 11px; border: 1px solid var(--border); border-radius: 4px; background: var(--surface); color: var(--text); cursor: pointer; }
+.variant-undo-redo .text-button:disabled { opacity: .45; cursor: default; }
+td.editable { cursor: pointer; }
+td.editable:hover { background-color: var(--accent-soft); }
+.fret-marker.variant-marker { border-width: 2px; }
+.fret-marker.variant-marker.is-edited { background: var(--accent); color: #fff; }
+.fret-marker.original-ghost { background: transparent; border-style: dashed; border-color: var(--muted); color: var(--muted); opacity: .7; }

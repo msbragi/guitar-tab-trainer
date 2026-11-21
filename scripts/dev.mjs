@@ -2,6 +2,8 @@ import { spawn } from 'node:child_process';
 
 const commands = [
   ['--filter', '@guitar-practice/core', 'watch'],
+  ['--filter', '@guitar-practice/audio-engine', 'watch'],
+  ['--filter', '@guitar-practice/study-project', 'watch'],
   ['--filter', '@guitar-practice/alphatab-adapter', 'watch'],
   ['--filter', '@guitar-practice/web', 'dev'],
 ];

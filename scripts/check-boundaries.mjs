@@ -4,8 +4,10 @@ import ts from 'typescript';
 
 const units = [
   { path: 'packages/core', allowed: [] },
+  { path: 'packages/audio-engine', allowed: ['@guitar-practice/core'] },
+  { path: 'packages/study-project', allowed: ['@guitar-practice/core'] },
   { path: 'packages/alphatab-adapter', allowed: ['@guitar-practice/core', '@coderline/alphatab', '@coderline/alphatab/core'] },
-  { path: 'apps/web', allowed: ['@guitar-practice/core', '@guitar-practice/alphatab-adapter', '@angular/', '@jsverse/transloco', 'rxjs', 'tslib'] },
+  { path: 'apps/web', allowed: ['@guitar-practice/core', '@guitar-practice/audio-engine', '@guitar-practice/study-project', '@guitar-practice/alphatab-adapter', '@angular/', '@jsverse/transloco', 'rxjs', 'tslib'] },
 ];
 const violations = [];
 function files(directory) {

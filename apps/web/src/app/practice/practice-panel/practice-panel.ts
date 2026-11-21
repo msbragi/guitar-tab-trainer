@@ -45,6 +45,8 @@ export class PracticePanel {
     return flow.phase === 'configure' || flow.phase === 'active' ? { from: flow.startBar + 1, to: flow.endBar + 1, track: this.trackName() } : null;
   });
   readonly ready = computed(() => !this.session.viewBusy() && ['stopped', 'paused', 'playing'].includes(this.session.transport().status));
+  readonly variants = computed(() => this.session.activePhrase()?.variants ?? []);
+  readonly activeVariantId = computed(() => this.session.activeVariant()?.id ?? null);
 
   constructor() {
     effect(() => {
