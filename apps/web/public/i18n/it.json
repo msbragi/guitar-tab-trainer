@@ -127,7 +127,35 @@
     "rigUnavailable": "Qui troverai il tuo rig virtuale. Il processamento del rig non è ancora disponibile. La tablatura aperta rimane in Studio.",
     "backToPractice": "Torna a Studio",
     "preferences": "Il tuo ambiente",
+    "closeSettings": "Chiudi impostazioni",
     "settingsUnavailable": "Altre preferenze saranno disponibili in un aggiornamento futuro."
+  },
+  "soundfont": {
+    "title": "Audio · SoundFont",
+    "description": "Carica file .sf2 locali dal tuo computer.",
+    "baseLabel": "SoundFont principale",
+    "guitarLabel": "Override chitarra (opzionale)",
+    "guitarHint": "Sovrascrive i preset di chitarra elettrica (GM 24–31) sopra il SoundFont principale.",
+    "defaultName": "sonivox.sf2 (predefinito)",
+    "none": "Nessuno",
+    "load": "Carica .sf2",
+    "loadBase": "Carica SoundFont principale (.sf2)",
+    "loadGuitar": "Carica SoundFont override chitarra (.sf2)",
+    "reset": "Ripristina predefinito",
+    "remove": "Rimuovi override",
+    "remapTitle": "Rimappatura chitarre",
+    "useBase": "Base (GM)",
+    "gm": {
+      "24": "Nylon",
+      "25": "Acustica",
+      "26": "Jazz",
+      "27": "Clean",
+      "28": "Muted",
+      "29": "Overdrive",
+      "30": "Distortion",
+      "31": "Armonici"
+    },
+    "invalidFile": "File SoundFont .sf2 non valido o illeggibile."
   },
   "theme": {
     "label": "Aspetto",

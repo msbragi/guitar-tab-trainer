@@ -5,7 +5,11 @@ export interface ScoreSummary {
   readonly title: string;
   readonly artist: string;
   readonly barCount: number;
-  readonly tracks: readonly { readonly index: number; readonly name: string }[];
+  readonly tracks: readonly {
+    readonly index: number;
+    readonly name: string;
+    readonly programs?: readonly number[];
+  }[];
 }
 
 /** Il chiamante gestisce l'accesso al file; il core non conosce File o filesystem. */

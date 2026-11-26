@@ -127,7 +127,35 @@
     "rigUnavailable": "Your virtual rig will live here. Rig processing is not available yet. Your open tablature is kept in Practice.",
     "backToPractice": "Back to Practice",
     "preferences": "Make it yours",
+    "closeSettings": "Close settings",
     "settingsUnavailable": "More preferences will be available in a future update."
+  },
+  "soundfont": {
+    "title": "Audio · SoundFont",
+    "description": "Load local .sf2 SoundFonts from your computer.",
+    "baseLabel": "Base SoundFont",
+    "guitarLabel": "Guitar Override (optional)",
+    "guitarHint": "Overrides electric guitar presets (GM 24–31) on top of the base SoundFont.",
+    "defaultName": "sonivox.sf2 (default)",
+    "none": "None",
+    "load": "Load .sf2",
+    "loadBase": "Load base SoundFont (.sf2)",
+    "loadGuitar": "Load guitar override SoundFont (.sf2)",
+    "reset": "Reset to default",
+    "remove": "Remove override",
+    "remapTitle": "Guitar remapping",
+    "useBase": "Base (GM)",
+    "gm": {
+      "24": "Nylon",
+      "25": "Steel",
+      "26": "Jazz",
+      "27": "Clean",
+      "28": "Muted",
+      "29": "Overdrive",
+      "30": "Distortion",
+      "31": "Harmonics"
+    },
+    "invalidFile": "Invalid or unreadable .sf2 SoundFont file."
   },
   "theme": {
     "label": "Appearance",

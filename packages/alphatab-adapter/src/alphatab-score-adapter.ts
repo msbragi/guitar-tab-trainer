@@ -17,6 +17,11 @@ export interface AlphaTabViewOptions {
   readonly audio?: { readonly scriptFile: string; readonly soundFont: string; readonly scrollElement: HTMLElement };
 }
 
+export interface SoundFontConfig {
+  readonly base?: Uint8Array | null;
+  readonly guitar?: Uint8Array | null;
+}
+
 /** Adapter browser: eventi del motore convertiti nel port del core, senza stato UI. */
 export class AlphaTabScoreAdapter implements ScoreLoader, TransportPort, MixerPort {
   private api: AlphaTabApi | undefined;
@@ -32,8 +37,52 @@ export class AlphaTabScoreAdapter implements ScoreLoader, TransportPort, MixerPo
   private practicePick: ((pick: PracticeBarPick) => void) | undefined;
   private practiceTicks: { readonly startTick: number; readonly endTick: number } | null = null;
   private practiceHighlight: { readonly trackIndex: number; readonly startBar: number; readonly endBar: number } | null = null;
+  private soundFonts: SoundFontConfig = {};
+  private customSoundFontsApplied = false;
+  private pendingSoundFontCleanup: (() => void) | undefined;
 
   constructor(private readonly host: HTMLElement, private readonly options: AlphaTabViewOptions) {}
+
+  setSoundFonts(config: SoundFontConfig): void {
+    this.soundFonts = {
+      base: config.base ? new Uint8Array(config.base) : null,
+      guitar: config.guitar ? new Uint8Array(config.guitar) : null,
+    };
+    if (this.api?.isReadyForPlayback && !this.destroyed) {
+      this.customSoundFontsApplied = true;
+      this.applySoundFonts(this.api, false);
+    }
+  }
+
+  private applySoundFonts(api: AlphaTabApi, defaultAlreadyLoaded: boolean): void {
+    const audio = this.options.audio;
+    if (!audio) return;
+    this.pendingSoundFontCleanup?.();
+    this.pendingSoundFontCleanup = undefined;
+    const { base, guitar } = this.soundFonts;
+    const appendGuitar = () => {
+      if (this.api === api && !this.destroyed && guitar) {
+        api.loadSoundFont(guitar.slice(), true);
+      }
+    };
+    if (base) {
+      api.loadSoundFont(base.slice(), false);
+      if (guitar) appendGuitar();
+    } else if (defaultAlreadyLoaded) {
+      if (guitar) appendGuitar();
+    } else {
+      if (guitar) {
+        const onLoaded = () => {
+          this.pendingSoundFontCleanup?.();
+          this.pendingSoundFontCleanup = undefined;
+          appendGuitar();
+        };
+        api.soundFontLoaded.on(onLoaded);
+        this.pendingSoundFontCleanup = () => api.soundFontLoaded.off(onLoaded);
+      }
+      api.loadSoundFont(audio.soundFont, false);
+    }
+  }
 
   fretboardAt(trackIndex: number, tick: number): FretboardFrame | null {
     return this.api ? readFretboard(this.api, trackIndex, tick) : null;
@@ -160,6 +209,7 @@ export class AlphaTabScoreAdapter implements ScoreLoader, TransportPort, MixerPo
 
   private prepareAudio(api: AlphaTabApi): void {
     const audio = this.options.audio!;
+    this.customSoundFontsApplied = false;
     this.emit({ type: 'preparing' });
     const generation = this.generation;
     const active = () => this.api === api && generation === this.generation && !this.destroyed;
@@ -198,6 +248,13 @@ export class AlphaTabScoreAdapter implements ScoreLoader, TransportPort, MixerPo
     const ready = () => {
       if (!active()) return;
       clearTimeout(timeout);
+      if (!this.customSoundFontsApplied) {
+        this.customSoundFontsApplied = true;
+        if (this.soundFonts.base || this.soundFonts.guitar) {
+          this.applySoundFonts(api, true);
+          return;
+        }
+      }
       position({ currentTick: api.tickPosition, endTick: api.endTick, currentTime: api.timePosition,
         endTime: api.endTime, modifiedTempo: api.player?.currentPosition.modifiedTempo ?? 0, isSeek: true });
       this.emit({ type: 'ready' });
@@ -225,6 +282,8 @@ export class AlphaTabScoreAdapter implements ScoreLoader, TransportPort, MixerPo
     }, 30_000);
     this.audioCleanup = () => {
       clearTimeout(timeout);
+      this.pendingSoundFontCleanup?.();
+      this.pendingSoundFontCleanup = undefined;
       if (scrollFrame !== undefined) cancelAnimationFrame(scrollFrame);
       api.beatMouseDown.off(seekToBeat);
       api.playerReady.off(ready); api.playerPositionChanged.off(position);

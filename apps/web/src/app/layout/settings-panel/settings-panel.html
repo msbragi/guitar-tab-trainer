@@ -1,11 +1,112 @@
-<section class="section-page settings-page" [attr.aria-label]="'nav.settings' | transloco">
-    <span class="section-symbol"><gp-icon name="settings" /></span><p class="eyebrow">{{ 'shell.preferences' | transloco }}</p>
-    <h2>{{ 'nav.settings' | transloco }}</h2><p class="section-description">{{ 'theme.description' | transloco }}</p>
-    <div class="settings-card"><label for="theme-select">{{ 'theme.label' | transloco }}</label>
-      <select [title]="'theme.label' | transloco" id="theme-select" [value]="theme.preference()" (change)="selectTheme($event)">
-        <option value="system">{{ 'theme.system' | transloco }}</option>
-        <option value="light">{{ 'theme.light' | transloco }}</option>
-        <option value="dark">{{ 'theme.dark' | transloco }}</option>
-      </select><p class="muted">{{ 'theme.saved' | transloco }}</p></div>
-    <p class="section-description">{{ 'shell.settingsUnavailable' | transloco }}</p>
-  </section>
+<aside class="side-panel settings-panel" [attr.aria-label]="'nav.settings' | transloco">
+  <div class="panel-top">
+    <h3><gp-icon name="settings" /><span>{{ 'nav.settings' | transloco }}</span></h3>
+    <button class="icon-button" type="button"
+      [attr.aria-label]="'shell.closeSettings' | transloco"
+      [title]="'shell.closeSettings' | transloco"
+      (click)="close.emit()">
+      ×
+    </button>
+  </div>
+
+  <div class="settings-content">
+    <section class="settings-section">
+      <div class="inline-field">
+        <label for="theme-select">{{ 'theme.label' | transloco }}</label>
+        <select [title]="'theme.label' | transloco" id="theme-select" [value]="theme.preference()" (change)="selectTheme($event)">
+          <option value="system">{{ 'theme.system' | transloco }}</option>
+          <option value="light">{{ 'theme.light' | transloco }}</option>
+          <option value="dark">{{ 'theme.dark' | transloco }}</option>
+        </select>
+      </div>
+    </section>
+
+    <section class="settings-section">
+      <h4>{{ 'soundfont.title' | transloco }}</h4>
+
+      <div class="soundfont-slot">
+        <span class="slot-label">{{ 'soundfont.baseLabel' | transloco }}</span>
+        <div class="slot-row">
+          <span class="slot-value" [title]="session.baseSoundFontName() ?? ('soundfont.defaultName' | transloco)">
+            {{ session.baseSoundFontName() ?? ('soundfont.defaultName' | transloco) }}
+          </span>
+          <input #baseSf2Input type="file" accept=".sf2" class="visually-hidden" (change)="onBaseSoundFontSelected($event)">
+          <div class="slot-actions">
+            <button type="button" class="icon-button slot-icon-btn"
+              [attr.aria-label]="'soundfont.loadBase' | transloco"
+              [title]="'soundfont.loadBase' | transloco"
+              (click)="chooseBaseSoundFont()">
+              <gp-icon name="folder" />
+            </button>
+            @if (session.baseSoundFontName()) {
+              <button type="button" class="icon-button slot-icon-btn"
+                [attr.aria-label]="'soundfont.reset' | transloco"
+                [title]="'soundfont.reset' | transloco"
+                (click)="resetBaseSoundFont()">
+                <gp-icon name="reset" />
+              </button>
+            }
+          </div>
+        </div>
+      </div>
+
+      <div class="soundfont-slot">
+        <span class="slot-label">{{ 'soundfont.guitarLabel' | transloco }}</span>
+        <div class="slot-row">
+          <span class="slot-value" [title]="session.guitarSoundFontName() ?? ('soundfont.none' | transloco)">
+            {{ session.guitarSoundFontName() ?? ('soundfont.none' | transloco) }}
+          </span>
+          <input #guitarSf2Input type="file" accept=".sf2" class="visually-hidden" (change)="onGuitarSoundFontSelected($event)">
+          <div class="slot-actions">
+            <button type="button" class="icon-button slot-icon-btn"
+              [attr.aria-label]="'soundfont.loadGuitar' | transloco"
+              [title]="'soundfont.loadGuitar' | transloco"
+              (click)="chooseGuitarSoundFont()">
+              <gp-icon name="folder" />
+            </button>
+            @if (session.guitarSoundFontName()) {
+              <button type="button" class="icon-button slot-icon-btn"
+                [attr.aria-label]="'soundfont.remove' | transloco"
+                [title]="'soundfont.remove' | transloco"
+                (click)="clearGuitarSoundFont()">
+                <gp-icon name="reset" />
+              </button>
+            }
+          </div>
+        </div>
+
+        @if (session.guitarSoundFontName() && session.guitarOverridePresets().length) {
+          <div class="remap-table" [attr.aria-label]="'soundfont.remapTitle' | transloco">
+            <span class="remap-caption">{{ 'soundfont.remapTitle' | transloco }}</span>
+            @for (gm of guitarPrograms; track gm) {
+              @let trackNames = trackLabelFor(gm);
+              <div class="remap-row" [class.used-in-score]="!!trackNames">
+                <div class="remap-gm">
+                  <span class="remap-gm-name">{{ gm }} · {{ ('soundfont.gm.' + gm) | transloco }}</span>
+                  @if (trackNames) {
+                    <span class="remap-track" [title]="trackNames">{{ trackNames }}</span>
+                  }
+                </div>
+                <select class="remap-select"
+                  [attr.aria-label]="('soundfont.gm.' + gm) | transloco"
+                  [value]="mappedPresetValue(gm)"
+                  (change)="onGuitarMapChange(gm, $event)">
+                  <option value="">{{ 'soundfont.useBase' | transloco }}</option>
+                  @for (preset of session.guitarOverridePresets(); track preset.index) {
+                    <option [value]="preset.index" [selected]="mappedPresetValue(gm) === '' + preset.index">
+                      {{ preset.program }}: {{ preset.name }}
+                    </option>
+                  }
+                </select>
+              </div>
+            }
+          </div>
+        }
+      </div>
+
+      @if (session.soundFontError()) {
+        <p class="settings-error" role="alert">{{ 'soundfont.invalidFile' | transloco }}</p>
+      }
+    </section>
+  </div>
+</aside>

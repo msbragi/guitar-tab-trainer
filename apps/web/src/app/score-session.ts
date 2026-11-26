@@ -33,6 +33,14 @@ import {
 import { CountIn } from './practice/count-in.js';
 import { GuitarCapture, initialGuitarCaptureStatus, type GuitarCaptureStatus } from './practice/guitar-capture.js';
 import { IndexedDbStudyProjectStore } from './projects/indexeddb-project-store.js';
+import { isValidSf2Bytes, SoundFontStore, type SoundFontSlot } from './projects/soundfont-store.js';
+import {
+  buildDefaultGuitarProgramMap,
+  readSf2Presets,
+  remapSf2GuitarPresets,
+  type GuitarProgramMap,
+  type Sf2Preset,
+} from './projects/sf2-presets.js';
 
 /** Composizione UI di core e adapter. I componenti presentano dati e inoltrano comandi. */
 @Injectable({ providedIn: 'root' })
@@ -102,6 +110,14 @@ export class ScoreSession {
 
   private store: CurrentSessionStore | undefined;
   private projectStore: IndexedDbStudyProjectStore | undefined;
+  private soundFontStore: SoundFontStore | undefined;
+  private baseSoundFontBytes: Uint8Array | null = null;
+  private guitarSoundFontBytes: Uint8Array | null = null;
+  readonly baseSoundFontName = signal<string | null>(null);
+  readonly guitarSoundFontName = signal<string | null>(null);
+  readonly guitarOverridePresets = signal<readonly Sf2Preset[]>([]);
+  readonly guitarProgramMap = signal<GuitarProgramMap>({});
+  readonly soundFontError = signal(false);
   private currentFile: CurrentSessionFile | undefined;
   private activeScoreBytes: Uint8Array | undefined;
   private loadGeneration = 0;
@@ -133,6 +149,8 @@ export class ScoreSession {
     const projectStore = new IndexedDbStudyProjectStore(factory);
     this.projectStore = projectStore;
     void this.refreshProjects();
+    const soundFontStore = new SoundFontStore(factory);
+    this.soundFontStore = soundFontStore;
     const adapter = new AlphaTabScoreAdapter(host, {
       fontDirectory: new URL('assets/alphatab/font/', this.document.baseURI).href,
       audio: {
@@ -196,6 +214,24 @@ export class ScoreSession {
       this.current.set(state);
     });
     this.available.set(true);
+    void soundFontStore.readAll().then((stored) => {
+      if (this.adapter !== adapter) return;
+      this.baseSoundFontBytes = stored.base?.bytes ?? null;
+      this.guitarSoundFontBytes = stored.guitar?.bytes ?? null;
+      this.baseSoundFontName.set(stored.base?.name ?? null);
+      this.guitarSoundFontName.set(stored.guitar?.name ?? null);
+      if (this.guitarSoundFontBytes) {
+        const presets = readSf2Presets(this.guitarSoundFontBytes);
+        this.guitarOverridePresets.set(presets);
+        this.guitarProgramMap.set(stored.guitarMap ?? buildDefaultGuitarProgramMap(presets));
+      } else {
+        this.guitarOverridePresets.set([]);
+        this.guitarProgramMap.set({});
+      }
+      if (this.baseSoundFontBytes || this.guitarSoundFontBytes) {
+        this.pushSoundFontsToAdapter(adapter);
+      }
+    });
     const generation = this.loadGeneration;
     void store.read().then((saved) => {
       // Un'apertura esplicita o il detach prevalgono sul recupero asincrono.
@@ -215,6 +251,8 @@ export class ScoreSession {
       this.cancelRecordingTake();
       store.close(); this.store = undefined;
       projectStore.close(); this.projectStore = undefined;
+      soundFontStore.close(); this.soundFontStore = undefined;
+      this.baseSoundFontBytes = null; this.guitarSoundFontBytes = null;
       this.activeScoreBytes = undefined;
       this.activeProjectSnapshot.set(null);
       this.available.set(false);
@@ -909,5 +947,76 @@ export class ScoreSession {
         : item,
     );
     await this.persistActiveProject({ ...project, phrases: updatedPhrases });
+  }
+
+  private pushSoundFontsToAdapter(target = this.adapter): void {
+    if (!target) return;
+    const remappedGuitar = this.guitarSoundFontBytes
+      ? remapSf2GuitarPresets(this.guitarSoundFontBytes, this.guitarProgramMap())
+      : null;
+    target.setSoundFonts({ base: this.baseSoundFontBytes, guitar: remappedGuitar });
+  }
+
+  async setCustomSoundFont(slot: SoundFontSlot, file: File): Promise<void> {
+    this.soundFontError.set(false);
+    let bytes: Uint8Array;
+    try {
+      bytes = new Uint8Array(await file.arrayBuffer());
+    } catch {
+      this.soundFontError.set(true);
+      return;
+    }
+    if (!isValidSf2Bytes(bytes)) {
+      this.soundFontError.set(true);
+      return;
+    }
+    if (slot === 'base') {
+      this.baseSoundFontBytes = bytes;
+      this.baseSoundFontName.set(file.name);
+      await this.soundFontStore?.save('base', { name: file.name, bytes });
+    } else {
+      const presets = readSf2Presets(bytes);
+      const defaultMap = buildDefaultGuitarProgramMap(presets);
+      this.guitarSoundFontBytes = bytes;
+      this.guitarSoundFontName.set(file.name);
+      this.guitarOverridePresets.set(presets);
+      this.guitarProgramMap.set(defaultMap);
+      await this.soundFontStore?.save('guitar', { name: file.name, bytes });
+      await this.soundFontStore?.saveGuitarMap(defaultMap);
+    }
+    this.pushSoundFontsToAdapter();
+  }
+
+  async setGuitarProgramMapping(gmProgram: number, sourcePresetIndex: number | null): Promise<void> {
+    const next: Record<number, number | null> = { ...this.guitarProgramMap() };
+    // Mantieni una mappatura 1:1 per preset sorgente nel chunk phdr.
+    if (sourcePresetIndex !== null) {
+      for (const [key, value] of Object.entries(next)) {
+        if (value === sourcePresetIndex && Number(key) !== gmProgram) {
+          next[Number(key)] = null;
+        }
+      }
+    }
+    next[gmProgram] = sourcePresetIndex;
+    this.guitarProgramMap.set(next);
+    await this.soundFontStore?.saveGuitarMap(next);
+    this.pushSoundFontsToAdapter();
+  }
+
+  async clearCustomSoundFont(slot: SoundFontSlot): Promise<void> {
+    this.soundFontError.set(false);
+    if (slot === 'base') {
+      this.baseSoundFontBytes = null;
+      this.baseSoundFontName.set(null);
+      await this.soundFontStore?.remove('base');
+    } else {
+      this.guitarSoundFontBytes = null;
+      this.guitarSoundFontName.set(null);
+      this.guitarOverridePresets.set([]);
+      this.guitarProgramMap.set({});
+      await this.soundFontStore?.remove('guitar');
+      await this.soundFontStore?.saveGuitarMap(null);
+    }
+    this.pushSoundFontsToAdapter();
   }
 }

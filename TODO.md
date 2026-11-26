@@ -1,6 +1,6 @@
 # Guitar Tab Trainer — Roadmap e attività
 
-Stato consolidato sulla working tree del 21 novembre 2026.
+Stato consolidato sulla working tree del 26 novembre 2026.
 Questo file contiene la roadmap attiva. Lo storico essenziale è in
 [docs/HISTORY.md](docs/HISTORY.md), lo stato tecnico in
 [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
@@ -44,6 +44,7 @@ archi H/P. Questi riscontri coesistono con i debiti automatici documentati.
 - [x] Consentire verifica e correzione delle note attraverso la fretboard con Undo/Redo.
 - [x] Conservare separate la frase originale e le sue varianti.
 - [x] Razionalizzare la toolbar superiore: rimossi i tab placeholder e `[Practice]`/`[Settings]`, icona ingranaggio Settings a destra del selettore lingua, spazio centrale libero e altezza compatta.
+- [x] Spostare Settings nella sidebar di destra (senza nascondere la tab aperta) e aggiungere il caricamento locale di SoundFont `.sf2` (Base + Guitar Override) persistiti in IndexedDB con tabellina di rimappatura chitarre GM (`24`–`31`) e indicazione delle tracce del brano aperto.
 - [ ] Verificare nel browser il flusso varianti (`Save phrase`, `+ New Variant`, `● Record Take`, Monitor ON/OFF, tuner/livello) e l'editing interattivo sulla fretboard con Undo/Redo.
 - [ ] Calibrare latenza, allineamento audio/posizione musicale e qualità della conversione Audio → MIDI con chitarra reale e interfaccia audio.
 

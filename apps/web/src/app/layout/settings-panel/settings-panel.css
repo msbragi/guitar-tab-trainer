@@ -1,1 +1,168 @@
 /* Shared styles are defined in src/styles.css. */
+.settings-panel {
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+}
+
+.settings-panel .panel-top {
+  margin-bottom: 10px;
+}
+
+.settings-panel .panel-top .icon-button {
+  font-size: 18px;
+  line-height: 1;
+}
+
+.settings-content {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.settings-section {
+  padding-top: 10px;
+  border-top: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.settings-section h4 {
+  margin: 0;
+  font-size: 11px;
+  font-weight: 650;
+  text-transform: uppercase;
+  letter-spacing: .8px;
+  color: var(--muted);
+}
+
+.inline-field {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.inline-field label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.inline-field select {
+  font-size: 12px;
+  padding: 5px 8px;
+  min-width: 110px;
+}
+
+.soundfont-slot {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 8px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface-raised);
+}
+
+.slot-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--muted);
+}
+
+.slot-row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+}
+
+.slot-value {
+  flex: 1 1 auto;
+  min-width: 0;
+  font-size: 12px;
+  color: var(--text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.slot-actions {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  flex: 0 0 auto;
+}
+
+.slot-icon-btn {
+  width: 26px;
+  height: 26px;
+}
+
+.remap-table {
+  margin-top: 6px;
+  padding-top: 6px;
+  border-top: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.remap-caption {
+  font-size: 10px;
+  font-weight: 650;
+  text-transform: uppercase;
+  letter-spacing: .6px;
+  color: var(--muted);
+}
+
+.remap-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  align-items: center;
+  gap: 6px;
+  padding: 3px 4px;
+  border-radius: 5px;
+}
+
+.remap-row.used-in-score {
+  background: var(--accent-soft);
+}
+
+.remap-gm {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.remap-gm-name {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.remap-track {
+  font-size: 10px;
+  color: var(--accent);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.remap-select {
+  width: 100%;
+  min-width: 0;
+  font-size: 11px;
+  padding: 3px 4px;
+}
+
+.settings-error {
+  margin: 0;
+  font-size: 11px;
+  color: var(--danger);
+}

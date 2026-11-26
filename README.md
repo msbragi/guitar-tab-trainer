@@ -62,12 +62,11 @@ The layout follows [the design reference](docs/GTT-UI.png) with standalone Angul
 
 - Compact top header with a guitar mark and application name/version (click to return to Practice), an open center area reserved for future tools, an EN/IT language selector, and a Settings gear icon toggle on the right. Navigation is local UI state; dead placeholder tabs have been removed.
 - Collapsible left **Library** sidebar with Open Tab, **Recent Files**, **Favorites** (star toggle), **Saved Phrases** for the active project, and **Export / Import Project** (`.gtt.json`).
-- Expandable song information above the mixer in the right sidebar, and a central alphaTab viewer. The viewer stays mounted across Settings toggles, retaining the loaded document and renderer.
-- Score & Tab, Tab Only, and Notation Only modes; zoom at 75%, 100%, 125%, and 150%; browser fullscreen where supported.
-- Track panel populated exclusively from the loaded score, with mute/unmute, cumulative solo/unsolo, and independent track volume through the alphaTab synthesizer.
+- Right sidebar with **Tracks & Mixer** (expandable song info, mute/unmute, cumulative solo, visibility, and independent track volume) that switches cleanly to the compact **Settings** panel (Appearance + local `.sf2` SoundFonts & Guitar Program Remapping) without hiding or interrupting the open tablature in the center.
+- Central alphaTab viewer with Score & Tab, Tab Only, and Notation Only modes; zoom at 75%, 100%, 125%, and 150%; browser fullscreen where supported.
 - Permanent bottom transport area with synthesized playback, timeline, A/B loop, speed, and read-only tempo. Master volume is active; the desktop transport uses a compact horizontal layout and wraps on smaller screens.
 
-Settings currently implements appearance preferences. Playback uses the real alphaTab synthesizer. Virtual Rig / VST3 hosting remains future work.
+Settings implements appearance preferences and local `.sf2` SoundFont customization (Base SoundFont + optional Guitar Override with per-program GM `24–31` remapping and active track indicators, persisted in IndexedDB). Playback uses the real alphaTab synthesizer. Real audio backing tracks and Virtual Rig / VST3 hosting remain future work.
 
 On small screens the side panels start collapsed and expand over the workspace. The notation paper retains a minimum width of 720px and scrolls inside the viewer, preserving musical readability without causing horizontal page overflow. The paper stays light in dark mode.
 

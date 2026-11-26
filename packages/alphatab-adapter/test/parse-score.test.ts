@@ -14,7 +14,7 @@ describe('parser alphaTab pubblico 1.9.0', () => {
       const { summary } = parseScore(bytes);
       expect(summary).toEqual({
         title: fixture.title, artist: '', barCount: fixture.bars,
-        tracks: fixture.tracks.map((name, index) => ({ index, name })),
+        tracks: fixture.tracks.map((name, index) => ({ index, name, programs: expect.any(Array) })),
       });
       expect(hash()).toBe(fixture.sha256);
       expect(createHash('sha256').update(readFileSync(file)).digest('hex')).toBe(fixture.sha256);
